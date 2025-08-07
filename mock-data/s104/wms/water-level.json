@@ -1,0 +1,47 @@
+{
+  "service": "S104-WMS",
+  "layer": "water_level",
+  "title": "Dynamic Water Level",
+  "abstract": "Real-time and predicted water levels",
+  "keywords": ["water_level", "tidal", "prediction", "S-104"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "stations": [
+    {
+      "id": "wl001",
+      "name": "Shanghai Port Station",
+      "location": [121.5, 31.2],
+      "currentLevel": 2.3,
+      "unit": "meters",
+      "datum": "MSL",
+      "trend": "rising",
+      "predictions": [
+        {"time": "2024-01-15T12:00:00Z", "level": 2.5},
+        {"time": "2024-01-15T13:00:00Z", "level": 2.8},
+        {"time": "2024-01-15T14:00:00Z", "level": 3.1}
+      ]
+    },
+    {
+      "id": "wl002",
+      "name": "Yangtze Estuary Station",
+      "location": [121.8, 31.4],
+      "currentLevel": 1.8,
+      "unit": "meters",
+      "datum": "MSL",
+      "trend": "falling",
+      "predictions": [
+        {"time": "2024-01-15T12:00:00Z", "level": 1.6},
+        {"time": "2024-01-15T13:00:00Z", "level": 1.4},
+        {"time": "2024-01-15T14:00:00Z", "level": 1.2}
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2024-01-15T16:20:00Z",
+    "updated": "2024-01-15T16:20:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "updateFrequency": "15min",
+    "stationCount": 156
+  }
+}

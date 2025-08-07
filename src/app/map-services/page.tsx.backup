@@ -1,0 +1,1137 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { 
+  Map, 
+  Layers, 
+  Settings, 
+  Eye, 
+  Download, 
+  RefreshCw,
+  ArrowLeft,
+  Globe,
+  Database,
+  Zap,
+  Activity,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  Anchor,
+  Waves
+} from 'lucide-react'
+import S100ServiceMap from '@/components/S100ServiceMap'
+
+// 模拟节点数据
+const mockNodes = [
+  {
+    id: 'global-root',
+    name: 'IHO全球根节点',
+    type: 'GLOBAL_ROOT',
+    level: 0,
+    description: '国际海道测量组织全球协调节点',
+    healthStatus: 'HEALTHY',
+    services: ['S101-WMS', 'S102-WMS'],
+    location: { lat: 51.5074, lng: -0.1278 } // London
+  },
+  {
+    id: 'china-national',
+    name: '中国海事局国家级节点',
+    type: 'NATIONAL',
+    level: 1,
+    description: '中国海事局总部的技术负责人',
+    healthStatus: 'HEALTHY',
+    services: ['S101-WMS', 'S101-WFS', 'S102-WMS', 'S102-WCS'],
+    location: { lat: 39.9042, lng: 116.4074 } // Beijing
+  },
+  {
+    id: 'east-china-sea',
+    name: '东海分局区域节点',
+    type: 'REGIONAL',
+    level: 2,
+    description: '中国海事局东海分局',
+    healthStatus: 'HEALTHY',
+    services: ['S101-WMS', 'S102-WMS'],
+    location: { lat: 31.2304, lng: 121.4737 } // Shanghai
+  },
+  {
+    id: 'shanghai-port',
+    name: '上海港叶子节点',
+    type: 'LEAF',
+    level: 3,
+    description: '上海港务局数据管理中心',
+    healthStatus: 'HEALTHY',
+    services: ['S101-WMS', 'S101-WFS', 'S102-WMS', 'S102-WCS', 'S104-WMS'],
+    location: { lat: 31.2000, lng: 121.5000 } // Shanghai Port
+  }
+]
+
+// 模拟S-100服务数据
+const mockS100Services = [
+  {
+    id: 's101-wms',
+    name: 'S-101电子海图WMS服务',
+    type: 'WMS' as const,
+    product: 'S101' as const,
+    endpoint: '/api/s101/wms',
+    version: '1.3.0',
+    layers: ['navigation', 'depth', 'landmark', 'restricted'],
+    formats: ['image/png', 'image/jpeg', 'application/json'],
+    status: 'ACTIVE' as const,
+    opacity: 0.7,
+    visible: false,
+    color: '#2563eb'
+  },
+  {
+    id: 's102-wms',
+    name: 'S-102高精度水深WMS服务',
+    type: 'WMS' as const,
+    product: 'S102' as const,
+    endpoint: '/api/s102/wms',
+    version: '1.3.0',
+    layers: ['bathymetry', 'contour', 'soundings', 'quality'],
+    formats: ['image/png', 'image/jpeg', 'application/json'],
+    status: 'ACTIVE' as const,
+    opacity: 0.7,
+    visible: false,
+    color: '#059669'
+  },
+  {
+    id: 's104-wms',
+    name: 'S-104动态水位WMS服务',
+    type: 'WMS' as const,
+    product: 'S104' as const,
+    endpoint: '/api/s104/wms',
+    version: '1.3.0',
+    layers: ['water_level', 'tidal', 'current', 'prediction'],
+    formats: ['image/png', 'image/jpeg'],
+    status: 'ACTIVE' as const,
+    opacity: 0.6,
+    visible: false,
+    color: '#7c3aed'
+  },
+  {
+    id: 's111-wms',
+    name: 'S-111实时海流WMS服务',
+    type: 'WMS' as const,
+    product: 'S111' as const,
+    endpoint: '/api/s111/wms',
+    version: '1.3.0',
+    layers: ['current', 'direction', 'speed', 'forecast'],
+    formats: ['image/png', 'image/jpeg'],
+    status: 'ACTIVE' as const,
+    opacity: 0.8,
+    visible: false,
+    color: '#ea580c'
+  }
+]
+
+export default function MapServicesPage() {
+  const [selectedNode, setSelectedNode] = useState(mockNodes[3]) // 默认选择上海港
+  const [s100Services, setS100Services] = useState(mockS100Services)
+  const [selectedService, setSelectedService] = useState(null)
+  const [serviceConfig, setServiceConfig] = useState({
+    autoRefresh: true,
+    refreshInterval: 30,
+    showLayers: true,
+    showLegend: true,
+    defaultFormat: 'image/png'
+  })
+
+  const getHealthIcon = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'MAINTENANCE':
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case 'ERROR':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />
+    }
+  }
+
+  const getHealthBadge = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <Badge variant="default" className="bg-green-500">活跃</Badge>
+      case 'MAINTENANCE':
+        return <Badge variant="secondary">维护中</Badge>
+      case 'ERROR':
+        return <Badge variant="destructive">错误</Badge>
+      default:
+        return <Badge variant="outline">离线</Badge>
+    }
+  }
+
+  const getNodeServices = (nodeId: string) => {
+    const node = mockNodes.find(n => n.id === nodeId)
+    return node ? node.services : []
+  }
+
+  const getAvailableServices = (nodeId: string) => {
+    const nodeServices = getNodeServices(nodeId)
+    return {
+      mapServices: s100Services.filter(service => 
+        nodeServices.some(ns => ns.includes(service.product) && ns.includes('WMS'))
+      ),
+      apiServices: s100Services.filter(service => 
+        nodeServices.some(ns => ns.includes(service.product) && (ns.includes('WFS') || ns.includes('WCS')))
+      )
+    }
+  }
+
+  const { mapServices, apiServices } = getAvailableServices(selectedNode.id)
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                返回首页
+              </Button>
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Map className="h-8 w-8 text-blue-600" />
+            S-100服务地图
+          </h1>
+          <p className="text-gray-600 mt-2">
+            底图 + S-100服务叠加呈现
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            刷新服务
+          </Button>
+          <Button>
+            <Settings className="h-4 w-4 mr-2" />
+            服务配置
+          </Button>
+        </div>
+      </div>
+
+      {/* S-100 Service Map */}
+      <S100ServiceMap 
+        nodes={mockNodes}
+        services={s100Services}
+        selectedNode={selectedNode}
+        onNodeSelect={(node) => setSelectedNode(node)}
+      />
+
+      {/* Node Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>节点选择</CardTitle>
+          <CardDescription>
+            选择要查看和管理的服务节点
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {mockNodes.map((node) => (
+              <div
+                key={node.id}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedNode.id === node.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedNode(node)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {node.type === 'GLOBAL_ROOT' && <Globe className="h-5 w-5 text-blue-600" />}
+                    {node.type === 'NATIONAL' && <Database className="h-5 w-5 text-green-600" />}
+                    {node.type === 'REGIONAL' && <Map className="h-5 w-5 text-orange-600" />}
+                    {node.type === 'LEAF' && <Activity className="h-5 w-5 text-purple-600" />}
+                    <span className="font-medium">{node.name}</span>
+                  </div>
+                  {getHealthIcon(node.healthStatus)}
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{node.description}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{node.type}</Badge>
+                  <Badge variant="secondary">{node.services.length} 服务</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Content */}
+      <Tabs defaultValue="map-services" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="map-services">地图服务</TabsTrigger>
+          <TabsTrigger value="api-services">API服务</TabsTrigger>
+          <TabsTrigger value="configuration">服务配置</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="map-services" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">地图服务 (WMS)</h2>
+              <p className="text-gray-600">{selectedNode.name} 支持的地图服务</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                预览地图
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                导出配置
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {mapServices.map((service) => (
+              <Card key={service.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Layers className="h-5 w-5 text-blue-600" />
+                      {service.name}
+                    </CardTitle>
+                    {getHealthBadge(service.status)}
+                  </div>
+                  <CardDescription>
+                    版本 {service.version} • WMS服务
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">端点</span>
+                      <span className="text-sm font-mono">{service.endpoint}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">支持格式</span>
+                      <div className="flex gap-1">
+                        {service.formats.slice(0, 2).map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {format}
+                          </Badge>
+                        ))}
+                        {service.formats.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{service.formats.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">图层</span>
+                      <div className="flex gap-1">
+                        {service.layers.slice(0, 3).map((layer) => (
+                          <Badge key={layer} variant="secondary" className="text-xs">
+                            {layer}
+                          </Badge>
+                        ))}
+                        {service.layers.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{service.layers.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => setSelectedService(service)}
+                    >
+                      查看详情
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      预览
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="api-services" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">API服务 (WFS/WCS)</h2>
+              <p className="text-gray-600">{selectedNode.name} 支持的API服务</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Zap className="h-4 w-4 mr-2" />
+                测试API
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                API文档
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {apiServices.map((service) => (
+              <Card key={service.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="h-5 w-5 text-green-600" />
+                      {service.name}
+                    </CardTitle>
+                    {getHealthBadge(service.status)}
+                  </div>
+                  <CardDescription>
+                    版本 {service.version} • {service.type}服务
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">端点</span>
+                      <span className="text-sm font-mono">{service.endpoint}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">支持格式</span>
+                      <div className="flex gap-1">
+                        {service.formats.map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {format}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {service.type === 'WFS' && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">要素类型</span>
+                        <div className="flex gap-1">
+                          {service.features?.slice(0, 2).map((feature) => (
+                            <Badge key={feature} variant="secondary" className="text-xs">
+                              {feature}
+                            </Badge>
+                          ))}
+                          {service.features?.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{service.features.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {service.type === 'WCS' && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">覆盖类型</span>
+                        <div className="flex gap-1">
+                          {service.coverages?.slice(0, 2).map((coverage) => (
+                            <Badge key={coverage} variant="secondary" className="text-xs">
+                              {coverage}
+                            </Badge>
+                          ))}
+                          {service.coverages?.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{service.coverages.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => setSelectedService(service)}
+                    >
+                      查看详情
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1"
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      测试
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="configuration" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>服务配置</CardTitle>
+              <CardDescription>
+                配置地图服务的全局参数和行为
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="auto-refresh">自动刷新</Label>
+                      <p className="text-sm text-gray-500">定期刷新服务状态</p>
+                    </div>
+                    <Switch
+                      id="auto-refresh"
+                      checked={serviceConfig.autoRefresh}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig(prev => ({ ...prev, autoRefresh: checked }))
+                      }
+                    />
+                  </div>
+                  
+                  {serviceConfig.autoRefresh && (
+                    <div>
+                      <Label htmlFor="refresh-interval">刷新间隔 (秒)</Label>
+                      <Select 
+                        value={serviceConfig.refreshInterval.toString()} 
+                        onValueChange={(value) => 
+                          setServiceConfig(prev => ({ ...prev, refreshInterval: parseInt(value) }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10秒</SelectItem>
+                          <SelectItem value="30">30秒</SelectItem>
+                          <SelectItem value="60">1分钟</SelectItem>
+                          <SelectItem value="300">5分钟</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="show-layers">显示图层</Label>
+                      <p className="text-sm text-gray-500">在地图上显示图层列表</p>
+                    </div>
+                    <Switch
+                      id="show-layers"
+                      checked={serviceConfig.showLayers}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig(prev => ({ ...prev, showLayers: checked }))
+                      }
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="show-legend">显示图例</Label>
+                      <p className="text-sm text-gray-500">在地图上显示图例</p>
+                    </div>
+                    <Switch
+                      id="show-legend"
+                      checked={serviceConfig.showLegend}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig(prev => ({ ...prev, showLegend: checked }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="default-format">默认输出格式</Label>
+                <Select 
+                  value={serviceConfig.defaultFormat} 
+                  onValueChange={(value) => 
+                    setServiceConfig(prev => ({ ...prev, defaultFormat: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="image/png">PNG图像</SelectItem>
+                    <SelectItem value="image/jpeg">JPEG图像</SelectItem>
+                    <SelectItem value="application/json">JSON</SelectItem>
+                    <SelectItem value="application/gml+xml">GML</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline">
+                  重置默认
+                </Button>
+                <Button>
+                  保存配置
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+// 模拟地图服务数据
+const mockMapServices = [
+  {
+    id: 's101-wms',
+    name: 'S-101电子海图WMS服务',
+    type: 'WMS',
+    product: 'S101',
+    status: 'ACTIVE',
+    endpoint: '/api/s101/wms',
+    version: '1.3.0',
+    layers: ['navigation', 'depth', 'landmark', 'restricted'],
+    formats: ['image/png', 'image/jpeg', 'application/json'],
+    nodeSupport: ['global-root', 'china-national', 'east-china-sea', 'shanghai-port'],
+    lastUpdated: '2024-01-15T10:30:00Z',
+    requestCount: 8542,
+    avgResponseTime: 245
+  },
+  {
+    id: 's102-wms',
+    name: 'S-102高精度水深WMS服务',
+    type: 'WMS',
+    product: 'S102',
+    status: 'ACTIVE',
+    endpoint: '/api/s102/wms',
+    version: '1.3.0',
+    layers: ['bathymetry', 'contour', 'soundings', 'quality'],
+    formats: ['image/png', 'image/jpeg', 'application/json'],
+    nodeSupport: ['china-national', 'east-china-sea', 'shanghai-port'],
+    lastUpdated: '2024-01-15T09:45:00Z',
+    requestCount: 3891,
+    avgResponseTime: 312
+  },
+  {
+    id: 's104-wms',
+    name: 'S-104动态水位WMS服务',
+    type: 'WMS',
+    product: 'S104',
+    status: 'MAINTENANCE',
+    endpoint: '/api/s104/wms',
+    version: '1.3.0',
+    layers: ['water_level', 'tidal', 'current', 'prediction'],
+    formats: ['image/png', 'image/jpeg'],
+    nodeSupport: ['shanghai-port'],
+    lastUpdated: '2024-01-14T16:20:00Z',
+    requestCount: 1245,
+    avgResponseTime: 189
+  }
+]
+
+// 模拟API服务数据
+const mockApiServices = [
+  {
+    id: 's101-wfs',
+    name: 'S-101电子海图WFS服务',
+    type: 'WFS',
+    product: 'S101',
+    status: 'ACTIVE',
+    endpoint: '/api/s101/wfs',
+    version: '2.0.0',
+    features: ['navigation', 'depth', 'landmark', 'restricted'],
+    formats: ['application/json', 'application/gml+xml'],
+    nodeSupport: ['china-national', 'shanghai-port'],
+    lastUpdated: '2024-01-15T11:15:00Z',
+    requestCount: 2156,
+    avgResponseTime: 178
+  },
+  {
+    id: 's102-wcs',
+    name: 'S-102高精度水深WCS服务',
+    type: 'WCS',
+    product: 'S102',
+    status: 'ACTIVE',
+    endpoint: '/api/s102/wcs',
+    version: '2.0.1',
+    coverages: ['bathymetry', 'depth_uncertainty', 'quality'],
+    formats: ['image/tiff', 'application/netcdf', 'application/json'],
+    nodeSupport: ['china-national', 'shanghai-port'],
+    lastUpdated: '2024-01-15T10:50:00Z',
+    requestCount: 831,
+    avgResponseTime: 456
+  }
+]
+
+export default function MapServicesPage() {
+  const [selectedNode, setSelectedNode] = useState(mockNodes[3]) // 默认选择上海港
+  const [mapServices, setMapServices] = useState(mockMapServices)
+  const [apiServices, setApiServices] = useState(mockApiServices)
+  const [selectedService, setSelectedService] = useState(null)
+  const [serviceConfig, setServiceConfig] = useState({
+    autoRefresh: true,
+    refreshInterval: 30,
+    showLayers: true,
+    showLegend: true,
+    defaultFormat: 'image/png'
+  })
+
+  const getHealthIcon = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'MAINTENANCE':
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case 'ERROR':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />
+    }
+  }
+
+  const getHealthBadge = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return <Badge variant="default" className="bg-green-500">活跃</Badge>
+      case 'MAINTENANCE':
+        return <Badge variant="secondary">维护中</Badge>
+      case 'ERROR':
+        return <Badge variant="destructive">错误</Badge>
+      default:
+        return <Badge variant="outline">离线</Badge>
+    }
+  }
+
+  const getNodeServices = (nodeId: string) => {
+    const node = mockNodes.find(n => n.id === nodeId)
+    return node ? node.services : []
+  }
+
+  const getAvailableServices = (nodeId: string) => {
+    const nodeServices = getNodeServices(nodeId)
+    return {
+      mapServices: mapServices.filter(service => 
+        nodeServices.some(ns => ns.includes(service.product) && ns.includes('WMS'))
+      ),
+      apiServices: apiServices.filter(service => 
+        nodeServices.some(ns => ns.includes(service.product) && (ns.includes('WFS') || ns.includes('WCS')))
+      )
+    }
+  }
+
+  const { mapServices: availableMapServices, apiServices: availableApiServices } = getAvailableServices(selectedNode.id)
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                返回首页
+              </Button>
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Map className="h-8 w-8 text-blue-600" />
+            地图服务管理
+          </h1>
+          <p className="text-gray-600 mt-2">
+            管理和浏览所选节点的地图服务和API服务
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            刷新服务
+          </Button>
+          <Button>
+            <Settings className="h-4 w-4 mr-2" />
+            服务配置
+          </Button>
+        </div>
+      </div>
+
+      {/* Node Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>节点选择</CardTitle>
+          <CardDescription>
+            选择要查看和管理的服务节点
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {mockNodes.map((node) => (
+              <div
+                key={node.id}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedNode.id === node.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedNode(node)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {node.type === 'GLOBAL_ROOT' && <Globe className="h-5 w-5 text-blue-600" />}
+                    {node.type === 'NATIONAL' && <Database className="h-5 w-5 text-green-600" />}
+                    {node.type === 'REGIONAL' && <Map className="h-5 w-5 text-orange-600" />}
+                    {node.type === 'LEAF' && <Activity className="h-5 w-5 text-purple-600" />}
+                    <span className="font-medium">{node.name}</span>
+                  </div>
+                  {getHealthIcon(node.healthStatus)}
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{node.description}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{node.type}</Badge>
+                  <Badge variant="secondary">{node.services.length} 服务</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Content */}
+      <Tabs defaultValue="map-services" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="map-services">地图服务</TabsTrigger>
+          <TabsTrigger value="api-services">API服务</TabsTrigger>
+          <TabsTrigger value="configuration">服务配置</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="map-services" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">地图服务 (WMS)</h2>
+              <p className="text-gray-600">{selectedNode.name} 支持的地图服务</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                预览地图
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                导出配置
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {availableMapServices.map((service) => (
+              <Card key={service.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Layers className="h-5 w-5 text-blue-600" />
+                      {service.name}
+                    </CardTitle>
+                    {getHealthBadge(service.status)}
+                  </div>
+                  <CardDescription>
+                    版本 {service.version} • {service.requestCount.toLocaleString()} 次调用
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">端点</span>
+                      <span className="text-sm font-mono">{service.endpoint}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">平均响应时间</span>
+                      <span className="text-sm">{service.avgResponseTime}ms</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">支持格式</span>
+                      <div className="flex gap-1">
+                        {service.formats.slice(0, 2).map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {format}
+                          </Badge>
+                        ))}
+                        {service.formats.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{service.formats.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">图层</span>
+                      <div className="flex gap-1">
+                        {service.layers.slice(0, 3).map((layer) => (
+                          <Badge key={layer} variant="secondary" className="text-xs">
+                            {layer}
+                          </Badge>
+                        ))}
+                        {service.layers.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{service.layers.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => setSelectedService(service)}
+                    >
+                      查看详情
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      预览
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="api-services" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">API服务 (WFS/WCS)</h2>
+              <p className="text-gray-600">{selectedNode.name} 支持的API服务</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Zap className="h-4 w-4 mr-2" />
+                测试API
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                API文档
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {availableApiServices.map((service) => (
+              <Card key={service.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="h-5 w-5 text-green-600" />
+                      {service.name}
+                    </CardTitle>
+                    {getHealthBadge(service.status)}
+                  </div>
+                  <CardDescription>
+                    版本 {service.version} • {service.requestCount.toLocaleString()} 次调用
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">端点</span>
+                      <span className="text-sm font-mono">{service.endpoint}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">平均响应时间</span>
+                      <span className="text-sm">{service.avgResponseTime}ms</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">支持格式</span>
+                      <div className="flex gap-1">
+                        {service.formats.map((format) => (
+                          <Badge key={format} variant="outline" className="text-xs">
+                            {format}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        {service.type === 'WFS' ? '要素类型' : '覆盖范围'}
+                      </span>
+                      <div className="flex gap-1">
+                        {(service.type === 'WFS' ? service.features : service.coverages).slice(0, 3).map((item) => (
+                          <Badge key={item} variant="secondary" className="text-xs">
+                            {item}
+                          </Badge>
+                        ))}
+                        {(service.type === 'WFS' ? service.features : service.coverages).length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{(service.type === 'WFS' ? service.features : service.coverages).length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => setSelectedService(service)}
+                    >
+                      查看详情
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1"
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      测试
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="configuration" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>服务配置</CardTitle>
+              <CardDescription>
+                配置地图服务和API服务的显示和行为参数
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="auto-refresh">自动刷新</Label>
+                      <p className="text-sm text-gray-600">自动刷新服务状态</p>
+                    </div>
+                    <Switch
+                      id="auto-refresh"
+                      checked={serviceConfig.autoRefresh}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig({...serviceConfig, autoRefresh: checked})
+                      }
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="refresh-interval">刷新间隔 (秒)</Label>
+                    <Input
+                      id="refresh-interval"
+                      type="number"
+                      value={serviceConfig.refreshInterval}
+                      onChange={(e) => 
+                        setServiceConfig({...serviceConfig, refreshInterval: parseInt(e.target.value)})
+                      }
+                      disabled={!serviceConfig.autoRefresh}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="show-layers">显示图层</Label>
+                      <p className="text-sm text-gray-600">在地图上显示图层列表</p>
+                    </div>
+                    <Switch
+                      id="show-layers"
+                      checked={serviceConfig.showLayers}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig({...serviceConfig, showLayers: checked})
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="show-legend">显示图例</Label>
+                      <p className="text-sm text-gray-600">在地图上显示图例</p>
+                    </div>
+                    <Switch
+                      id="show-legend"
+                      checked={serviceConfig.showLegend}
+                      onCheckedChange={(checked) => 
+                        setServiceConfig({...serviceConfig, showLegend: checked})
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="default-format">默认格式</Label>
+                    <Select value={serviceConfig.defaultFormat} onValueChange={(value) => 
+                      setServiceConfig({...serviceConfig, defaultFormat: value})
+                    }>
+                      <SelectTrigger>
+                        <SelectValue placeholder="选择默认格式" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="image/png">PNG</SelectItem>
+                        <SelectItem value="image/jpeg">JPEG</SelectItem>
+                        <SelectItem value="application/json">JSON</SelectItem>
+                        <SelectItem value="application/gml+xml">GML</SelectItem>
+                        <SelectItem value="image/tiff">TIFF</SelectItem>
+                        <SelectItem value="application/netcdf">NetCDF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>服务优先级</Label>
+                    <div className="space-y-2">
+                      {availableMapServices.map((service) => (
+                        <div key={service.id} className="flex items-center justify-between">
+                          <span className="text-sm">{service.name}</span>
+                          <Select defaultValue="medium">
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="high">高</SelectItem>
+                              <SelectItem value="medium">中</SelectItem>
+                              <SelectItem value="low">低</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline">重置</Button>
+                <Button>保存配置</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

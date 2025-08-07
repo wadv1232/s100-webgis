@@ -1,0 +1,33 @@
+{
+  "service": "S102-WCS",
+  "coverage": "bathymetry_grid",
+  "title": "Bathymetry Grid Coverage",
+  "abstract": "High resolution bathymetric grid data",
+  "keywords": ["bathymetry", "grid", "coverage", "S-102"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "grid": {
+    "resolution": [0.001, 0.001],
+    "size": [5000, 5000],
+    "cellSize": "1m x 1m"
+  },
+  "format": {
+    "type": "GeoTIFF",
+    "compression": "LZW",
+    "dataType": "float32",
+    "noData": -9999
+  },
+  "statistics": {
+    "min": 2.5,
+    "max": 45.8,
+    "mean": 18.3,
+    "stddev": 8.2
+  },
+  "metadata": {
+    "created": "2024-01-15T10:50:00Z",
+    "updated": "2024-01-15T10:50:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "fileSize": "2.4GB"
+  }
+}

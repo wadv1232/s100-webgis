@@ -1,0 +1,46 @@
+{
+  "service": "S101-WMS",
+  "layer": "navigation",
+  "title": "Navigation Layer",
+  "abstract": "Electronic Navigational Chart (ENC) navigation features",
+  "keywords": ["navigation", "ENC", "S-101", "chart"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "features": [
+    {
+      "type": "Feature",
+      "id": "nav001",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[120.5, 31.0], [121.0, 31.2], [121.5, 31.1]]
+      },
+      "properties": {
+        "name": "Main Shipping Lane",
+        "type": "recommended_route",
+        "direction": "east_west",
+        "status": "active"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nav002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.2, 31.5]
+      },
+      "properties": {
+        "name": "Waypoint Alpha",
+        "type": "waypoint",
+        "designation": "mandatory",
+        "status": "active"
+      }
+    }
+  ],
+  "metadata": {
+    "created": "2024-01-15T10:30:00Z",
+    "updated": "2024-01-15T10:30:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "accuracy": "high"
+  }
+}

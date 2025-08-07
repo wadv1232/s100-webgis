@@ -1,0 +1,122 @@
+/* Leaflet Draw Styles */
+@import url('https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css');
+
+/* Custom styles for leaflet-draw */
+.leaflet-draw-toolbar {
+  top: 10px !important;
+  right: 10px !important;
+}
+
+.leaflet-draw-section {
+  margin: 0 !important;
+}
+
+.leaflet-draw-toolbar a {
+  background-color: #fff !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  margin-right: 5px !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-polygon {
+  background-position: -262px 0 !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-polyline {
+  background-position: -262px -26px !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-rectangle {
+  background-position: -262px -52px !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-circle {
+  background-position: -262px -78px !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-draw-marker {
+  background-position: -262px -104px !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-edit-edit {
+  background-position: -236px 0 !important;
+}
+
+.leaflet-draw-toolbar a.leaflet-draw-edit-remove {
+  background-position: -236px -26px !important;
+}
+
+/* Custom marker styles */
+.custom-div-icon {
+  background: transparent;
+  border: none;
+}
+
+/* Popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.4;
+}
+
+/* Drawing styles */
+.leaflet-draw-draw-polygon {
+  background-color: #f59e0b !important;
+}
+
+.leaflet-draw-draw-polyline {
+  background-color: #10b981 !important;
+}
+
+.leaflet-draw-draw-rectangle {
+  background-color: #ef4444 !important;
+}
+
+.leaflet-draw-draw-circle {
+  background-color: #8b5cf6 !important;
+}
+
+.leaflet-draw-draw-marker {
+  background-color: #3b82f6 !important;
+}
+
+/* Edit styles */
+.leaflet-draw-edit-edit {
+  background-color: #6b7280 !important;
+}
+
+.leaflet-draw-edit-remove {
+  background-color: #dc2626 !important;
+}
+
+/* Layer control styles */
+.leaflet-control-layers {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+}
+
+.leaflet-control-layers-toggle {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAxMC8yOS8xMiKqq3kAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzVxteM2AAABHklEQVRIib2Vyw6EIAxFW5idr///Qx9sfG3pLEyJ3tAwi5EmBqRo7vHawiEEERHS6x7MTMxMVv6+z3tPMUYSkfTM/R0fEaG2bbMv+Gc4nZzn+dN4HAcREa3r+hi3bcuu68jLskhVIlW073tWaYlQ9+F9IpqmSfq+fwskhdO/AwmUTJXrOuaRQNeRkOd5lq7rXmS5InmERKoER/QMvUAPlZDHcZRhGN4CSeGY+aHMqgcks5RrHv/eeh455x5KrMq2yHQdibDO6ncG/KZWL7M8xDyS1/MIO0NJqdULLS81X6/X6aR0nqBSJcPeZnlZrzN477NKURn2Nus8sjzmEII0TfMiyxUuxphVWjpJkbx0btUnshRihVv70Bv8ItXq6Asoi/ZiCbU6YgAAAABJRU5ErkJggg==') !important;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .leaflet-draw-toolbar {
+    top: 5px !important;
+    right: 5px !important;
+  }
+  
+  .leaflet-draw-toolbar a {
+    width: 30px !important;
+    height: 30px !important;
+    margin-right: 2px !important;
+  }
+}

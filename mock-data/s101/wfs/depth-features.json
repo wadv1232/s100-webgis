@@ -1,0 +1,62 @@
+{
+  "service": "S101-WFS",
+  "featureType": "depth",
+  "title": "Depth Features",
+  "abstract": "Sounding depth points and depth contours",
+  "keywords": ["depth", "sounding", "bathymetry", "S-101"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "features": [
+    {
+      "type": "Feature",
+      "id": "depth001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.1, 31.2]
+      },
+      "properties": {
+        "depth": 15.5,
+        "unit": "meters",
+        "quality": "surveyed",
+        "date": "2024-01-10",
+        "source": "multibeam"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "depth002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.3, 31.4]
+      },
+      "properties": {
+        "depth": 22.3,
+        "unit": "meters",
+        "quality": "surveyed",
+        "date": "2024-01-10",
+        "source": "multibeam"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "contour001",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[121.0, 31.0], [121.5, 31.0], [121.5, 31.5], [121.0, 31.5], [121.0, 31.0]]
+      },
+      "properties": {
+        "depth": 20.0,
+        "unit": "meters",
+        "type": "depth_contour",
+        "interval": 5.0
+      }
+    }
+  ],
+  "metadata": {
+    "created": "2024-01-15T11:15:00Z",
+    "updated": "2024-01-15T11:15:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "featureCount": 1250
+  }
+}
