@@ -1,0 +1,53 @@
+{
+  "service": "S111-WFS",
+  "featureType": "current_vectors",
+  "title": "Ocean Current Vectors",
+  "abstract": "Real-time ocean current vector data",
+  "keywords": ["current", "vector", "ocean", "S-111"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "features": [
+    {
+      "type": "Feature",
+      "id": "current001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.5, 31.2]
+      },
+      "properties": {
+        "speed": 1.2,
+        "direction": 45,
+        "unit": "m/s",
+        "depth": 5.0,
+        "time": "2024-01-15T12:00:00Z",
+        "source": "radar",
+        "quality": "high"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "current002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [121.8, 31.4]
+      },
+      "properties": {
+        "speed": 0.8,
+        "direction": 120,
+        "unit": "m/s",
+        "depth": 5.0,
+        "time": "2024-01-15T12:00:00Z",
+        "source": "radar",
+        "quality": "high"
+      }
+    }
+  ],
+  "metadata": {
+    "created": "2024-01-15T14:30:00Z",
+    "updated": "2024-01-15T14:30:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "updateFrequency": "30min",
+    "featureCount": 8900
+  }
+}

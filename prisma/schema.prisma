@@ -1,0 +1,574 @@
+// S-100海事服务平台数据库模型
+// 支持分层递归架构：全球根节点 -> 国家级节点 -> 区域节点 -> 叶子节点
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 节点类型枚举
+enum NodeType {
+  GLOBAL_ROOT    // 全球根节点 (如IHO)
+  NATIONAL       // 国家级节点 (如中国海事局)
+  REGIONAL       // 区域节点 (如东海分局)
+  LEAF           // 叶子节点 (如上海港)
+}
+
+// S-100产品类型枚举
+enum S100Product {
+  S101    // 电子海图
+  S102    // 高精度水深
+  S104    // 动态水位
+  S111    // 实时海流
+  S124    // 航行警告
+  S125    // 航行信息
+  S131    // 海洋保护区
+}
+
+// 服务类型枚举
+enum ServiceType {
+  WFS     // Web要素服务
+  WMS     // Web地图服务
+  WCS     // Web覆盖服务
+}
+
+// 数据集状态枚举
+enum DatasetStatus {
+  UPLOADED    // 已上传
+  PROCESSING  // 处理中
+  PUBLISHED   // 已发布
+  ARCHIVED    // 已归档
+  ERROR       // 错误
+}
+
+// 节点健康状态枚举
+enum NodeHealth {
+  HEALTHY     // 健康
+  WARNING     // 警告
+  ERROR       // 错误
+  OFFLINE     // 离线
+}
+
+// 用户角色枚举
+enum UserRole {
+  ADMIN          // 系统管理员 - 完全权限
+  NODE_ADMIN     // 节点管理员 - 管理节点和用户
+  DATA_MANAGER   // 数据管理员 - 管理数据集
+  SERVICE_MANAGER // 服务管理员 - 管理服务能力
+  DEVELOPER      // 开发者 - API访问和开发
+  USER           // 普通用户 - 只读访问
+  GUEST          // 游客 - 有限访问
+}
+
+// 权限类型枚举
+enum Permission {
+  // 节点管理权限
+  NODE_CREATE      // 创建节点
+  NODE_READ        // 查看节点
+  NODE_UPDATE      // 更新节点
+  NODE_DELETE      // 删除节点
+  
+  // 数据管理权限
+  DATASET_CREATE   // 创建数据集
+  DATASET_READ     // 查看数据集
+  DATASET_UPDATE   // 更新数据集
+  DATASET_DELETE   // 删除数据集
+  DATASET_PUBLISH  // 发布数据集
+  
+  // 服务管理权限
+  SERVICE_CREATE   // 创建服务
+  SERVICE_READ     // 查看服务
+  SERVICE_UPDATE   // 更新服务
+  SERVICE_DELETE   // 删除服务
+  
+  // 用户管理权限
+  USER_CREATE      // 创建用户
+  USER_READ        // 查看用户
+  USER_UPDATE      // 更新用户
+  USER_DELETE      // 删除用户
+  
+  // 系统管理权限
+  SYSTEM_CONFIG    // 系统配置
+  SYSTEM_MONITOR   // 系统监控
+  
+  // 开发者权限
+  API_READ         // API文档查看
+  API_TEST         // API测试
+  API_KEY_CREATE   // API密钥创建
+  API_KEY_MANAGE   // API密钥管理
+}
+
+// 节点表 - 支持分层递归架构
+model Node {
+  id              String      @id @default(cuid())
+  code            String      @unique   // 节点唯一标识符
+  name            String      // 节点名称
+  type            NodeType    // 节点类型
+  level           Int         // 层级深度 (0=根节点, 1=国家级, 2=区域级, 3=叶子节点)
+  description     String?     // 节点描述
+  apiUrl          String      // 节点API地址
+  adminUrl        String?     // 管理API地址
+  coverage        String?     // 覆盖范围 (GeoJSON格式)
+  isActive        Boolean     @default(true)  // 是否激活
+  healthStatus    NodeHealth  @default(OFFLINE) // 健康状态
+  lastHealthCheck DateTime?   // 最后健康检查时间
+  parentId        String?     // 父节点ID (支持分层结构)
+  latitude        Float?      // 纬度坐标
+  longitude       Float?      // 经度坐标
+  contactEmail    String?     // 联系邮箱
+  contactPhone    String?     // 联系电话
+  contactOrg      String?     // 联系机构
+  defaultZoom     Int         @default(5) // 默认缩放级别
+  minZoom         Int         @default(1) // 最小缩放级别
+  maxZoom         Int         @default(18) // 最大缩放级别
+  extentBbox      String?     // 范围边界框 (GeoJSON格式)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // 关系
+  parent          Node?       @relation("NodeHierarchy", fields: [parentId], references: [id])
+  children        Node[]      @relation("NodeHierarchy")
+  datasets        Dataset[]   // 该节点发布的数据集
+  capabilities    Capability[] // 该节点支持的服务能力
+  childNodeRelations ChildNode[]  @relation("ChildNodeParent") // 作为父节点的子节点关系
+  parentNodeRelations ChildNode[]  @relation("ChildNodeChild")  // 作为子节点的父节点关系
+  users           User[]      // 关联的用户
+  serviceDirectoryEntries ServiceDirectoryEntry[] // 服务目录条目
+  baseMapConfigs  NodeBaseMapConfig[] // 节点底图配置
+  userPreferences UserBaseMapPreference[] // 用户底图偏好
+  identityProviders IdentityProvider[] // 节点身份提供商
+
+  @@map("nodes")
+}
+
+// 子节点关系表 (用于多对多关系)
+model ChildNode {
+  id          String   @id @default(cuid())
+  parentId    String   // 父节点ID
+  childId     String   // 子节点ID
+  createdAt   DateTime @default(now())
+
+  parent      Node     @relation("ChildNodeParent", fields: [parentId], references: [id])
+  child       Node     @relation("ChildNodeChild", fields: [childId], references: [id])
+
+  @@unique([parentId, childId])
+  @@map("child_nodes")
+}
+
+// 数据集表
+model Dataset {
+  id            String        @id @default(cuid())
+  name          String        // 数据集名称
+  description   String?       // 数据集描述
+  productType   S100Product   // S-100产品类型
+  version       String        // 版本号
+  status        DatasetStatus @default(UPLOADED)
+  fileName      String        // 原始文件名
+  filePath      String        // 文件存储路径
+  fileSize      Int           // 文件大小(字节)
+  mimeType      String        // MIME类型
+  coverage      String?       // 覆盖范围 (GeoJSON格式)
+  metadata      String?       // 元数据 (JSON格式)
+  publishedAt   DateTime?     // 发布时间
+  nodeId        String        // 所属节点ID
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // 关系
+  node          Node          @relation(fields: [nodeId], references: [id])
+  services      Service[]     // 相关服务
+
+  @@map("datasets")
+}
+
+// 服务能力表
+model Capability {
+  id          String      @id @default(cuid())
+  nodeId      String      // 节点ID
+  productType S100Product // S-100产品类型
+  serviceType ServiceType // 服务类型
+  isEnabled   Boolean     @default(true) // 是否启用
+  endpoint    String?     // 服务端点
+  version     String?     // 服务版本
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // 关系
+  node        Node        @relation(fields: [nodeId], references: [id])
+
+  @@unique([nodeId, productType, serviceType])
+  @@map("capabilities")
+}
+
+// 服务实例表
+model Service {
+  id            String      @id @default(cuid())
+  datasetId     String?     // 数据集ID (可选，用于系统服务)
+  serviceType   ServiceType // 服务类型
+  endpoint      String      // 服务端点
+  configuration String?     // 配置信息 (JSON格式)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // 关系
+  dataset       Dataset?    @relation(fields: [datasetId], references: [id])
+
+  @@map("services")
+}
+
+// 用户表 (扩展原有模型)
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  username      String      @unique
+  name          String?
+  role          UserRole    @default(USER)
+  nodeId        String?     // 所属节点ID
+  isActive      Boolean     @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // 关系
+  node          Node?        @relation(fields: [nodeId], references: [id])
+  posts         Post[]       // 保持向后兼容
+  userPermissions UserPermission[] // 用户权限
+  baseMapPreferences UserBaseMapPreference[] // 用户底图偏好
+  apiKeys       ApiKey[]     // API密钥
+  identityMappings UserIdentityMapping[] // 用户身份映射
+
+  @@map("users")
+}
+
+// 角色权限表 (定义角色默认权限)
+model RolePermission {
+  id          String      @id @default(cuid())
+  role        UserRole
+  permission  Permission
+  createdAt   DateTime    @default(now())
+
+  @@unique([role, permission])
+  @@map("role_permissions")
+}
+
+// 用户权限表 (用户特定权限，覆盖角色权限)
+model UserPermission {
+  id          String      @id @default(cuid())
+  userId      String
+  permission  Permission
+  isGranted   Boolean     @default(true) // true=授予权限，false=拒绝权限
+  createdAt   DateTime    @default(now())
+
+  // 关系
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([userId, permission])
+  @@map("user_permissions")
+}
+
+// API密钥表
+model ApiKey {
+  id            String      @id @default(cuid())
+  key           String      @unique   // API密钥值
+  name          String      // 密钥名称
+  description   String?     // 密钥描述
+  userId        String      // 关联用户ID
+  permissions   String      // JSON格式的权限配置
+  quota         Int?        // 调用配额限制
+  quotaUsed     Int         @default(0) // 已使用配额
+  quotaResetAt  DateTime?   // 配额重置时间
+  expiresAt     DateTime?   // 过期时间
+  lastUsedAt    DateTime?   // 最后使用时间
+  isActive      Boolean     @default(true) // 是否激活
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // 关系
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// 用户场景表
+model UserScenario {
+  id          String      @id @default(cuid())
+  name        String      // 场景名称
+  description String?     // 场景描述
+  icon        String?     // 图标
+  color       String?     // 主题色
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // 关系
+  scenarioRoles ScenarioRole[] // 场景角色关联
+
+  @@map("user_scenarios")
+}
+
+// 场景角色关联表
+model ScenarioRole {
+  id          String      @id @default(cuid())
+  scenarioId  String
+  role        UserRole
+  permissions String      // JSON格式的权限配置
+  createdAt   DateTime    @default(now())
+
+  // 关系
+  scenario    UserScenario @relation(fields: [scenarioId], references: [id])
+
+  @@unique([scenarioId, role])
+  @@map("scenario_roles")
+}
+
+// 服务目录条目表 - 扁平化服务发现的核心
+model ServiceDirectoryEntry {
+  id              String      @id @default(cuid())
+  nodeId          String      // 提供服务的叶子节点ID
+  productType     S100Product // S-100产品类型
+  serviceType     ServiceType // 服务类型
+  coverage        String      // 覆盖范围 (GeoJSON格式)
+  endpoint        String      // 直接访问的服务端点URL
+  version         String?     // 服务版本
+  isEnabled       Boolean     @default(true) // 是否启用
+  lastSyncedAt    DateTime    // 最后同步时间
+  expiresAt       DateTime    // 缓存过期时间
+  confidence      Float       @default(1.0) // 置信度 (0.0-1.0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // 关系
+  node            Node        @relation(fields: [nodeId], references: [id])
+
+  @@index([nodeId, productType, serviceType])
+  @@index([productType, serviceType])
+  @@map("service_directory_entries")
+}
+
+// 服务目录同步任务表
+model SyncTask {
+  id              String      @id @default(cuid())
+  taskId          String      @unique   // 任务唯一标识
+  status          SyncStatus  @default(PENDING) // 任务状态
+  targetType      SyncTarget  // 同步目标类型
+  targetId        String      // 目标ID
+  startedAt       DateTime?   // 开始时间
+  completedAt     DateTime?   // 完成时间
+  duration        Int?        // 执行时长(毫秒)
+  successCount    Int         @default(0) // 成功计数
+  failureCount    Int         @default(0) // 失败计数
+  errorMessage    String?     // 错误信息
+  result          String?     // 结果摘要 (JSON)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("sync_tasks")
+}
+
+// 系统配置表
+model SystemConfig {
+  id              String      @id @default(cuid())
+  key             String      @unique   // 配置键
+  value           String      // 配置值 (JSON格式)
+  description     String?     // 配置描述
+  category        String      @default("general") // 配置分类
+  isSystem        Boolean     @default(false) // 是否系统配置
+  updatedAt       DateTime    @updatedAt
+  updatedBy       String?     // 更新者用户ID
+
+  @@map("system_configs")
+}
+
+// 节点底图配置表
+model NodeBaseMapConfig {
+  id              String      @id @default(cuid())
+  nodeId          String      // 节点ID
+  type            String      @default("osm") // 底图类型: osm, satellite, terrain, custom
+  customUrl       String?     // 自定义底图URL
+  attribution     String?     // 归属信息
+  minZoom         Int         @default(1) // 最小缩放级别
+  maxZoom         Int         @default(18) // 最大缩放级别
+  isActive        Boolean     @default(true) // 是否启用
+  isDefault       Boolean     @default(false) // 是否为节点默认配置
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  updatedBy       String?     // 更新者用户ID
+
+  // 关系
+  node            Node        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@unique([nodeId, isDefault]) // 每个节点只能有一个默认配置
+  @@map("node_base_map_configs")
+}
+
+// 用户底图偏好设置表 (用户个人偏好，覆盖节点默认配置)
+model UserBaseMapPreference {
+  id              String      @id @default(cuid())
+  userId          String      // 用户ID
+  nodeId          String      // 节点ID (用户在不同节点可能有不同偏好)
+  type            String      @default("osm") // 底图类型
+  customUrl       String?     // 自定义底图URL
+  attribution     String?     // 归属信息
+  minZoom         Int         @default(1) // 最小缩放级别
+  maxZoom         Int         @default(18) // 最大缩放级别
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // 关系
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  node            Node        @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, nodeId]) // 每个用户在每个节点只能有一个偏好设置
+  @@map("user_base_map_preferences")
+}
+
+// 同步状态枚举
+enum SyncStatus {
+  PENDING     // 等待中
+  RUNNING     // 运行中
+  COMPLETED   // 已完成
+  FAILED      // 失败
+  CANCELLED   // 已取消
+}
+
+// 同步目标类型枚举
+enum SyncTarget {
+  FULL_SYNC   // 全量同步
+  NODE_SYNC   // 节点同步
+  INCREMENTAL // 增量同步
+}
+
+// 身份提供商类型枚举
+enum IdentityProviderType {
+  GLOBAL_ROOT    // 全球根身份提供商 (如IHO)
+  NATIONAL       // 国家级身份提供商 (如中国MSA)
+  REGIONAL       // 区域级身份提供商 (如东海分局)
+  LEAF           // 叶子节点身份提供商 (如上海港)
+}
+
+// 身份提供商状态枚举
+enum IdentityProviderStatus {
+  ACTIVE        // 活跃
+  INACTIVE      // 非活跃
+  PENDING       // 待审核
+  REVOKED       // 已撤销
+}
+
+// 信任关系状态枚举
+enum TrustRelationshipStatus {
+  ACTIVE        // 活跃
+  INACTIVE      // 非活跃
+  PENDING       // 待确认
+  REVOKED       // 已撤销
+}
+
+// 身份提供商表
+model IdentityProvider {
+  id                    String                    @id @default(cuid())
+  nodeId                String                    // 关联的节点ID
+  name                  String                    // 身份提供商名称
+  type                  IdentityProviderType      // 身份提供商类型
+  issuerUrl             String                    @unique           // 签发者URL (e.g., https://id.iho.int)
+  jwksUrl               String                    // JWKS端点URL
+  authorizationEndpoint String                    // 授权端点
+  tokenEndpoint         String                    // 令牌端点
+  userinfoEndpoint      String?                   // 用户信息端点
+  clientId              String                    // 客户端ID (用于向其他IdP注册)
+  clientSecret          String?                   // 客户端密钥
+  scopes                String                    // 支持的权限范围 (JSON数组)
+  status                IdentityProviderStatus    @default(PENDING)
+  metadata              String?                   // 元数据 (JSON格式)
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  // 关系
+  node                  Node                       @relation(fields: [nodeId], references: [id])
+  trustAsTruster        TrustRelationship[]       @relation("TrustRelationshipTruster")
+  trustAsTrusted        TrustRelationship[]       @relation("TrustRelationshipTrusted")
+  federatedUsers        FederatedUser[]           // 关联的联邦用户
+
+  @@map("identity_providers")
+}
+
+// 信任关系表 (建立身份提供商之间的信任链)
+model TrustRelationship {
+  id             String                   @id @default(cuid())
+  trusterId      String                   // 信任方ID (谁信任)
+  trustedId      String                   // 被信任方ID (被谁信任)
+  status         TrustRelationshipStatus @default(PENDING)
+  trustLevel     Int                      @default(1) // 信任级别 (1-5)
+  maxScope       String?                  // 最大允许的权限范围
+  tokenMapping   String?                  // 令牌映射规则 (JSON格式)
+  metadata       String?                  // 信任关系元数据
+  establishedAt  DateTime?                // 建立时间
+  expiresAt      DateTime?                // 过期时间
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  // 关系
+  truster        IdentityProvider         @relation("TrustRelationshipTruster", fields: [trusterId], references: [id])
+  trusted        IdentityProvider         @relation("TrustRelationshipTrusted", fields: [trustedId], references: [id])
+
+  @@unique([trusterId, trustedId])
+  @@map("trust_relationships")
+}
+
+// 联邦用户表 (存储来自不同身份提供商的用户信息)
+model FederatedUser {
+  id                 String              @id @default(cuid())
+  identityProviderId String              // 身份提供商ID
+  subject            String              // 用户唯一标识 (sub)
+  email              String?             // 用户邮箱
+  name               String?             // 用户姓名
+  profile            String?             // 用户资料 (JSON格式)
+  lastLoginAt        DateTime?           // 最后登录时间
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  // 关系
+  identityProvider   IdentityProvider     @relation(fields: [identityProviderId], references: [id])
+  userMappings       UserIdentityMapping[] // 用户身份映射
+
+  @@unique([identityProviderId, subject])
+  @@map("federated_users")
+}
+
+// 用户身份映射表 (将联邦用户映射到本地用户)
+model UserIdentityMapping {
+  id              String              @id @default(cuid())
+  userId          String              // 本地用户ID
+  federatedUserId String              // 联邦用户ID
+  mappingType     String              @default("oidc") // 映射类型 (oidc, saml, etc.)
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // 关系
+  user            User                @relation(fields: [userId], references: [id])
+  federatedUser   FederatedUser       @relation(fields: [federatedUserId], references: [id])
+
+  @@unique([userId, federatedUserId])
+  @@map("user_identity_mappings")
+}
+
+// Post表 (保持向后兼容)
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@map("posts")
+}

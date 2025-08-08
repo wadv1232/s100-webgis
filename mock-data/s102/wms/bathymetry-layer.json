@@ -1,0 +1,37 @@
+{
+  "service": "S102-WMS",
+  "layer": "bathymetry",
+  "title": "High Resolution Bathymetry",
+  "abstract": "High precision bathymetric data grid",
+  "keywords": ["bathymetry", "depth", "S-102", "high_precision"],
+  "crs": "EPSG:4326",
+  "bbox": [120.0, 30.0, 125.0, 35.0],
+  "grid": {
+    "resolution": 0.001,
+    "width": 5000,
+    "height": 5000,
+    "cellSize": "1m"
+  },
+  "data": {
+    "minDepth": 2.5,
+    "maxDepth": 45.8,
+    "avgDepth": 18.3,
+    "uncertainty": {
+      "type": "standard_deviation",
+      "value": 0.8
+    }
+  },
+  "quality": {
+    "surveyDate": "2024-01-10",
+    "equipment": "multibeam_echosounder",
+    "accuracy": "0.1m",
+    "coverage": "100%"
+  },
+  "metadata": {
+    "created": "2024-01-15T09:45:00Z",
+    "updated": "2024-01-15T09:45:00Z",
+    "version": "1.0.0",
+    "source": "Shanghai Port Authority",
+    "dataPoints": 12500000
+  }
+}

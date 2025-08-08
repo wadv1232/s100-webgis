@@ -1,0 +1,29 @@
+{
+  "statistics": {
+    "total_tasks": 1,
+    "active_tasks": 1,
+    "completed_tasks": 0,
+    "blocked_tasks": 0,
+    "cancelled_tasks": 0,
+    "completion_rate": 0.0,
+    "priority_distribution": {
+      "high": 1,
+      "medium": 0,
+      "low": 0
+    },
+    "type_distribution": {
+      "feature": 1,
+      "bugfix": 0,
+      "optimization": 0,
+      "documentation": 0
+    }
+  },
+  "recent_activity": [
+    {
+      "task_id": "001",
+      "action": "created",
+      "timestamp": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "last_updated": "2024-01-15T10:30:00Z"
+}
