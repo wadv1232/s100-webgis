@@ -1,3 +1,27 @@
+/**
+ * @api {POST} /nodes/[id]/health/ post_nodes_[id]_health_
+ * @apiName POSTnodes_[id]_health_
+ * @apiGroup 对外数据服务API
+ * @apiCategory PUBLIC
+ * @apiVersion 1.0.0
+ * 
+ * @apiDescription POST endpoint for health
+ * 
+ * @apiCategoryDescription 节点对外提供S-100数据服务的统一入口。对最终用户可见。
+ * 
+ * @apiAuthentication 推荐使用`Authorization: Bearer <token>`或`?apikey=<key>`进行访问控制。
+ * 
+ * 
+ * @apiSuccess {Response} response HTTP response object
+ * @apiSuccess {{ id: string }} data Response data
+ * 
+ * @apiError {Number} code Error code
+ * @apiError {String} message Error message
+ * 
+ * @apiExample {curl} Example usage:
+ * curl -X POST http://localhost:3000/nodes/[id]/health/
+ * 
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 

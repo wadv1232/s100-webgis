@@ -465,10 +465,11 @@ const NodeManagement = () => {
         <div className="lg:col-span-2">
           {selectedNode ? (
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">概览</TabsTrigger>
                 <TabsTrigger value="coverage">覆盖范围</TabsTrigger>
                 <TabsTrigger value="capabilities">服务能力</TabsTrigger>
+                <TabsTrigger value="configuration">配置管理</TabsTrigger>
                 <TabsTrigger value="policy">合规策略</TabsTrigger>
               </TabsList>
 
@@ -654,6 +655,89 @@ const NodeManagement = () => {
                         <p className="text-sm">点击"添加能力"为节点配置服务能力</p>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="configuration" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>节点配置管理</CardTitle>
+                    <CardDescription>
+                      配置节点的基本信息、联系方式和界面设置
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">节点名称</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">节点描述</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.description || '未设置'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">联系邮箱</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedNode.contactEmail || `contact@${selectedNode.code.toLowerCase().replace('_', '-')}.example.com`}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">联系电话</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.contactPhone || '+86-xxx-xxxx-xxxx'}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">默认缩放级别</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.defaultZoom || 5}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">最小缩放级别</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.minZoom || 1}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">最大缩放级别</Label>
+                          <p className="text-sm text-muted-foreground">{selectedNode.maxZoom || 18}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">默认视图中心</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedNode.longitude && selectedNode.latitude 
+                            ? `${selectedNode.longitude}, ${selectedNode.latitude}`
+                            : '116.4074, 39.9042'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 pt-4 border-t">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm text-muted-foreground">
+                          最后更新: {new Date(selectedNode.updatedAt).toLocaleString('zh-CN')}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm"
+                            onClick={() => {
+                              // 导航到专门的配置管理页面
+                              window.location.href = '/node-configuration'
+                            }}
+                          >
+                            <Settings className="h-4 w-4 mr-1" />
+                            详细配置
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

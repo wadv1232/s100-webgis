@@ -659,7 +659,14 @@ export default function NodeDetailPanelNew({
               <div>
                 <Label className="text-gray-500">覆盖范围</Label>
                 <p className="text-xs font-mono bg-gray-50 p-2 rounded mt-1 max-h-32 overflow-y-auto">
-                  {JSON.stringify(JSON.parse(selectedNode.coverage), null, 2)}
+                  {(() => {
+                    try {
+                      return JSON.stringify(JSON.parse(selectedNode.coverage), null, 2);
+                    } catch (error) {
+                      console.error('Error parsing coverage JSON:', error);
+                      return selectedNode.coverage; // 显示原始内容
+                    }
+                  })()}
                 </p>
               </div>
             )}

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { UserRole, Permission } from '@prisma/client'
 import { hasPermission } from './auth/permissions'
+import { federatedJWTValidator, ValidatedToken } from './federated-jwt-validator'
 
 // NextAuth.js 配置选项
 export const authOptions = {
@@ -96,14 +97,14 @@ export interface AuthUser {
   nodeId?: string
   isActive: boolean
   permissions: Permission[]
+  federated?: boolean
+  issuer?: string
+  tokenPayload?: any
 }
 
 // 从请求头中获取认证信息
 export async function auth(request: NextRequest): Promise<AuthUser | null> {
   try {
-    // 在实际应用中，这里应该验证JWT token或session
-    // 现在我们使用一个简化的方式，从Authorization头获取用户信息
-    
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return null
@@ -111,8 +112,30 @@ export async function auth(request: NextRequest): Promise<AuthUser | null> {
 
     const token = authHeader.substring(7)
     
-    // 在实际应用中，这里应该验证JWT token
-    // 现在我们简化处理，假设token就是用户邮箱
+    // 尝试联邦JWT验证
+    const validationResult: ValidatedToken = await federatedJWTValidator.validateToken(token)
+    
+    if (validationResult.isValid && validationResult.localUser) {
+      // 联邦认证成功
+      const localUser = validationResult.localUser
+      const permissions = getUserPermissions(localUser.role)
+      
+      return {
+        id: localUser.id,
+        email: localUser.email,
+        username: localUser.username,
+        name: localUser.name,
+        role: localUser.role,
+        nodeId: localUser.nodeId,
+        isActive: localUser.isActive,
+        permissions,
+        federated: true,
+        issuer: validationResult.issuer,
+        tokenPayload: validationResult.payload
+      }
+    }
+    
+    // 如果联邦认证失败，回退到传统认证
     const user = mockUsers.find(u => u.email === token)
     
     if (!user || !user.isActive) {
@@ -124,7 +147,8 @@ export async function auth(request: NextRequest): Promise<AuthUser | null> {
 
     return {
       ...user,
-      permissions
+      permissions,
+      federated: false
     }
   } catch (error) {
     console.error('Authentication error:', error)

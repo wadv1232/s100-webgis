@@ -119,6 +119,13 @@ model Node {
   parentId        String?     // 父节点ID (支持分层结构)
   latitude        Float?      // 纬度坐标
   longitude       Float?      // 经度坐标
+  contactEmail    String?     // 联系邮箱
+  contactPhone    String?     // 联系电话
+  contactOrg      String?     // 联系机构
+  defaultZoom     Int         @default(5) // 默认缩放级别
+  minZoom         Int         @default(1) // 最小缩放级别
+  maxZoom         Int         @default(18) // 最大缩放级别
+  extentBbox      String?     // 范围边界框 (GeoJSON格式)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -133,6 +140,7 @@ model Node {
   serviceDirectoryEntries ServiceDirectoryEntry[] // 服务目录条目
   baseMapConfigs  NodeBaseMapConfig[] // 节点底图配置
   userPreferences UserBaseMapPreference[] // 用户底图偏好
+  identityProviders IdentityProvider[] // 节点身份提供商
 
   @@map("nodes")
 }
@@ -232,6 +240,7 @@ model User {
   userPermissions UserPermission[] // 用户权限
   baseMapPreferences UserBaseMapPreference[] // 用户底图偏好
   apiKeys       ApiKey[]     // API密钥
+  identityMappings UserIdentityMapping[] // 用户身份映射
 
   @@map("users")
 }
@@ -432,6 +441,121 @@ enum SyncTarget {
   FULL_SYNC   // 全量同步
   NODE_SYNC   // 节点同步
   INCREMENTAL // 增量同步
+}
+
+// 身份提供商类型枚举
+enum IdentityProviderType {
+  GLOBAL_ROOT    // 全球根身份提供商 (如IHO)
+  NATIONAL       // 国家级身份提供商 (如中国MSA)
+  REGIONAL       // 区域级身份提供商 (如东海分局)
+  LEAF           // 叶子节点身份提供商 (如上海港)
+}
+
+// 身份提供商状态枚举
+enum IdentityProviderStatus {
+  ACTIVE        // 活跃
+  INACTIVE      // 非活跃
+  PENDING       // 待审核
+  REVOKED       // 已撤销
+}
+
+// 信任关系状态枚举
+enum TrustRelationshipStatus {
+  ACTIVE        // 活跃
+  INACTIVE      // 非活跃
+  PENDING       // 待确认
+  REVOKED       // 已撤销
+}
+
+// 身份提供商表
+model IdentityProvider {
+  id                    String                    @id @default(cuid())
+  nodeId                String                    // 关联的节点ID
+  name                  String                    // 身份提供商名称
+  type                  IdentityProviderType      // 身份提供商类型
+  issuerUrl             String                    @unique           // 签发者URL (e.g., https://id.iho.int)
+  jwksUrl               String                    // JWKS端点URL
+  authorizationEndpoint String                    // 授权端点
+  tokenEndpoint         String                    // 令牌端点
+  userinfoEndpoint      String?                   // 用户信息端点
+  clientId              String                    // 客户端ID (用于向其他IdP注册)
+  clientSecret          String?                   // 客户端密钥
+  scopes                String                    // 支持的权限范围 (JSON数组)
+  status                IdentityProviderStatus    @default(PENDING)
+  metadata              String?                   // 元数据 (JSON格式)
+  isActive              Boolean                   @default(true)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  // 关系
+  node                  Node                       @relation(fields: [nodeId], references: [id])
+  trustAsTruster        TrustRelationship[]       @relation("TrustRelationshipTruster")
+  trustAsTrusted        TrustRelationship[]       @relation("TrustRelationshipTrusted")
+  federatedUsers        FederatedUser[]           // 关联的联邦用户
+
+  @@map("identity_providers")
+}
+
+// 信任关系表 (建立身份提供商之间的信任链)
+model TrustRelationship {
+  id             String                   @id @default(cuid())
+  trusterId      String                   // 信任方ID (谁信任)
+  trustedId      String                   // 被信任方ID (被谁信任)
+  status         TrustRelationshipStatus @default(PENDING)
+  trustLevel     Int                      @default(1) // 信任级别 (1-5)
+  maxScope       String?                  // 最大允许的权限范围
+  tokenMapping   String?                  // 令牌映射规则 (JSON格式)
+  metadata       String?                  // 信任关系元数据
+  establishedAt  DateTime?                // 建立时间
+  expiresAt      DateTime?                // 过期时间
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  // 关系
+  truster        IdentityProvider         @relation("TrustRelationshipTruster", fields: [trusterId], references: [id])
+  trusted        IdentityProvider         @relation("TrustRelationshipTrusted", fields: [trustedId], references: [id])
+
+  @@unique([trusterId, trustedId])
+  @@map("trust_relationships")
+}
+
+// 联邦用户表 (存储来自不同身份提供商的用户信息)
+model FederatedUser {
+  id                 String              @id @default(cuid())
+  identityProviderId String              // 身份提供商ID
+  subject            String              // 用户唯一标识 (sub)
+  email              String?             // 用户邮箱
+  name               String?             // 用户姓名
+  profile            String?             // 用户资料 (JSON格式)
+  lastLoginAt        DateTime?           // 最后登录时间
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  // 关系
+  identityProvider   IdentityProvider     @relation(fields: [identityProviderId], references: [id])
+  userMappings       UserIdentityMapping[] // 用户身份映射
+
+  @@unique([identityProviderId, subject])
+  @@map("federated_users")
+}
+
+// 用户身份映射表 (将联邦用户映射到本地用户)
+model UserIdentityMapping {
+  id              String              @id @default(cuid())
+  userId          String              // 本地用户ID
+  federatedUserId String              // 联邦用户ID
+  mappingType     String              @default("oidc") // 映射类型 (oidc, saml, etc.)
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // 关系
+  user            User                @relation(fields: [userId], references: [id])
+  federatedUser   FederatedUser       @relation(fields: [federatedUserId], references: [id])
+
+  @@unique([userId, federatedUserId])
+  @@map("user_identity_mappings")
 }
 
 // Post表 (保持向后兼容)

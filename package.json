@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec \"npx tsx config/app/server.ts\" --watch config/app/server.ts --watch src --ext ts,tsx,js,jsx --delay 1 2>&1 | tee logs/app/dev.log",
+    "dev": "npx next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
