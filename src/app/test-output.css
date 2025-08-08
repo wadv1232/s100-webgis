@@ -1,0 +1,1753 @@
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*/
+
+/*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  /* 1 */
+  border-width: 0;
+  /* 2 */
+  border-style: solid;
+  /* 2 */
+  border-color: #e5e7eb;
+  /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5;
+  /* 1 */
+  -webkit-text-size-adjust: 100%;
+  /* 2 */
+  -moz-tab-size: 4;
+  /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4;
+  /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* 4 */
+  font-feature-settings: normal;
+  /* 5 */
+  font-variation-settings: normal;
+  /* 6 */
+  -webkit-tap-highlight-color: transparent;
+  /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0;
+  /* 1 */
+  line-height: inherit;
+  /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0;
+  /* 1 */
+  color: inherit;
+  /* 2 */
+  border-top-width: 1px;
+  /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* 1 */
+  font-feature-settings: normal;
+  /* 2 */
+  font-variation-settings: normal;
+  /* 3 */
+  font-size: 1em;
+  /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0;
+  /* 1 */
+  border-color: inherit;
+  /* 2 */
+  border-collapse: collapse;
+  /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  /* 1 */
+  font-feature-settings: inherit;
+  /* 1 */
+  font-variation-settings: inherit;
+  /* 1 */
+  font-size: 100%;
+  /* 1 */
+  font-weight: inherit;
+  /* 1 */
+  line-height: inherit;
+  /* 1 */
+  letter-spacing: inherit;
+  /* 1 */
+  color: inherit;
+  /* 1 */
+  margin: 0;
+  /* 2 */
+  padding: 0;
+  /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button;
+  /* 1 */
+  background-color: transparent;
+  /* 2 */
+  background-image: none;
+  /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield;
+  /* 1 */
+  outline-offset: -2px;
+  /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  /* 1 */
+  font: inherit;
+  /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  opacity: 1;
+  /* 1 */
+  color: #9ca3af;
+  /* 2 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  /* 1 */
+  color: #9ca3af;
+  /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  /* 1 */
+  vertical-align: middle;
+  /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+
+.border-border {
+  border-color: hsl(var(--border));
+}
+
+.border-border\/0 {
+  border-color: hsl(var(--border) / 0);
+}
+
+.border-border\/10 {
+  border-color: hsl(var(--border) / 0.1);
+}
+
+.border-border\/100 {
+  border-color: hsl(var(--border) / 1);
+}
+
+.border-border\/15 {
+  border-color: hsl(var(--border) / 0.15);
+}
+
+.border-border\/20 {
+  border-color: hsl(var(--border) / 0.2);
+}
+
+.border-border\/25 {
+  border-color: hsl(var(--border) / 0.25);
+}
+
+.border-border\/30 {
+  border-color: hsl(var(--border) / 0.3);
+}
+
+.border-border\/35 {
+  border-color: hsl(var(--border) / 0.35);
+}
+
+.border-border\/40 {
+  border-color: hsl(var(--border) / 0.4);
+}
+
+.border-border\/45 {
+  border-color: hsl(var(--border) / 0.45);
+}
+
+.border-border\/5 {
+  border-color: hsl(var(--border) / 0.05);
+}
+
+.border-border\/50 {
+  border-color: hsl(var(--border) / 0.5);
+}
+
+.border-border\/55 {
+  border-color: hsl(var(--border) / 0.55);
+}
+
+.border-border\/60 {
+  border-color: hsl(var(--border) / 0.6);
+}
+
+.border-border\/65 {
+  border-color: hsl(var(--border) / 0.65);
+}
+
+.border-border\/70 {
+  border-color: hsl(var(--border) / 0.7);
+}
+
+.border-border\/75 {
+  border-color: hsl(var(--border) / 0.75);
+}
+
+.border-border\/80 {
+  border-color: hsl(var(--border) / 0.8);
+}
+
+.border-border\/85 {
+  border-color: hsl(var(--border) / 0.85);
+}
+
+.border-border\/90 {
+  border-color: hsl(var(--border) / 0.9);
+}
+
+.border-border\/95 {
+  border-color: hsl(var(--border) / 0.95);
+}
+
+.border-input {
+  border-color: hsl(var(--input));
+}
+
+.border-input\/0 {
+  border-color: hsl(var(--input) / 0);
+}
+
+.border-input\/10 {
+  border-color: hsl(var(--input) / 0.1);
+}
+
+.border-input\/100 {
+  border-color: hsl(var(--input) / 1);
+}
+
+.border-input\/15 {
+  border-color: hsl(var(--input) / 0.15);
+}
+
+.border-input\/20 {
+  border-color: hsl(var(--input) / 0.2);
+}
+
+.border-input\/25 {
+  border-color: hsl(var(--input) / 0.25);
+}
+
+.border-input\/30 {
+  border-color: hsl(var(--input) / 0.3);
+}
+
+.border-input\/35 {
+  border-color: hsl(var(--input) / 0.35);
+}
+
+.border-input\/40 {
+  border-color: hsl(var(--input) / 0.4);
+}
+
+.border-input\/45 {
+  border-color: hsl(var(--input) / 0.45);
+}
+
+.border-input\/5 {
+  border-color: hsl(var(--input) / 0.05);
+}
+
+.border-input\/50 {
+  border-color: hsl(var(--input) / 0.5);
+}
+
+.border-input\/55 {
+  border-color: hsl(var(--input) / 0.55);
+}
+
+.border-input\/60 {
+  border-color: hsl(var(--input) / 0.6);
+}
+
+.border-input\/65 {
+  border-color: hsl(var(--input) / 0.65);
+}
+
+.border-input\/70 {
+  border-color: hsl(var(--input) / 0.7);
+}
+
+.border-input\/75 {
+  border-color: hsl(var(--input) / 0.75);
+}
+
+.border-input\/80 {
+  border-color: hsl(var(--input) / 0.8);
+}
+
+.border-input\/85 {
+  border-color: hsl(var(--input) / 0.85);
+}
+
+.border-input\/90 {
+  border-color: hsl(var(--input) / 0.9);
+}
+
+.border-input\/95 {
+  border-color: hsl(var(--input) / 0.95);
+}
+
+.bg-background {
+  background-color: hsl(var(--background));
+}
+
+.bg-background\/0 {
+  background-color: hsl(var(--background) / 0);
+}
+
+.bg-background\/10 {
+  background-color: hsl(var(--background) / 0.1);
+}
+
+.bg-background\/100 {
+  background-color: hsl(var(--background) / 1);
+}
+
+.bg-background\/15 {
+  background-color: hsl(var(--background) / 0.15);
+}
+
+.bg-background\/20 {
+  background-color: hsl(var(--background) / 0.2);
+}
+
+.bg-background\/25 {
+  background-color: hsl(var(--background) / 0.25);
+}
+
+.bg-background\/30 {
+  background-color: hsl(var(--background) / 0.3);
+}
+
+.bg-background\/35 {
+  background-color: hsl(var(--background) / 0.35);
+}
+
+.bg-background\/40 {
+  background-color: hsl(var(--background) / 0.4);
+}
+
+.bg-background\/45 {
+  background-color: hsl(var(--background) / 0.45);
+}
+
+.bg-background\/5 {
+  background-color: hsl(var(--background) / 0.05);
+}
+
+.bg-background\/50 {
+  background-color: hsl(var(--background) / 0.5);
+}
+
+.bg-background\/55 {
+  background-color: hsl(var(--background) / 0.55);
+}
+
+.bg-background\/60 {
+  background-color: hsl(var(--background) / 0.6);
+}
+
+.bg-background\/65 {
+  background-color: hsl(var(--background) / 0.65);
+}
+
+.bg-background\/70 {
+  background-color: hsl(var(--background) / 0.7);
+}
+
+.bg-background\/75 {
+  background-color: hsl(var(--background) / 0.75);
+}
+
+.bg-background\/80 {
+  background-color: hsl(var(--background) / 0.8);
+}
+
+.bg-background\/85 {
+  background-color: hsl(var(--background) / 0.85);
+}
+
+.bg-background\/90 {
+  background-color: hsl(var(--background) / 0.9);
+}
+
+.bg-background\/95 {
+  background-color: hsl(var(--background) / 0.95);
+}
+
+.bg-card {
+  background-color: hsl(var(--card));
+}
+
+.bg-card-foreground {
+  background-color: hsl(var(--card-foreground));
+}
+
+.bg-card-foreground\/0 {
+  background-color: hsl(var(--card-foreground) / 0);
+}
+
+.bg-card-foreground\/10 {
+  background-color: hsl(var(--card-foreground) / 0.1);
+}
+
+.bg-card-foreground\/100 {
+  background-color: hsl(var(--card-foreground) / 1);
+}
+
+.bg-card-foreground\/15 {
+  background-color: hsl(var(--card-foreground) / 0.15);
+}
+
+.bg-card-foreground\/20 {
+  background-color: hsl(var(--card-foreground) / 0.2);
+}
+
+.bg-card-foreground\/25 {
+  background-color: hsl(var(--card-foreground) / 0.25);
+}
+
+.bg-card-foreground\/30 {
+  background-color: hsl(var(--card-foreground) / 0.3);
+}
+
+.bg-card-foreground\/35 {
+  background-color: hsl(var(--card-foreground) / 0.35);
+}
+
+.bg-card-foreground\/40 {
+  background-color: hsl(var(--card-foreground) / 0.4);
+}
+
+.bg-card-foreground\/45 {
+  background-color: hsl(var(--card-foreground) / 0.45);
+}
+
+.bg-card-foreground\/5 {
+  background-color: hsl(var(--card-foreground) / 0.05);
+}
+
+.bg-card-foreground\/50 {
+  background-color: hsl(var(--card-foreground) / 0.5);
+}
+
+.bg-card-foreground\/55 {
+  background-color: hsl(var(--card-foreground) / 0.55);
+}
+
+.bg-card-foreground\/60 {
+  background-color: hsl(var(--card-foreground) / 0.6);
+}
+
+.bg-card-foreground\/65 {
+  background-color: hsl(var(--card-foreground) / 0.65);
+}
+
+.bg-card-foreground\/70 {
+  background-color: hsl(var(--card-foreground) / 0.7);
+}
+
+.bg-card-foreground\/75 {
+  background-color: hsl(var(--card-foreground) / 0.75);
+}
+
+.bg-card-foreground\/80 {
+  background-color: hsl(var(--card-foreground) / 0.8);
+}
+
+.bg-card-foreground\/85 {
+  background-color: hsl(var(--card-foreground) / 0.85);
+}
+
+.bg-card-foreground\/90 {
+  background-color: hsl(var(--card-foreground) / 0.9);
+}
+
+.bg-card-foreground\/95 {
+  background-color: hsl(var(--card-foreground) / 0.95);
+}
+
+.bg-card\/0 {
+  background-color: hsl(var(--card) / 0);
+}
+
+.bg-card\/10 {
+  background-color: hsl(var(--card) / 0.1);
+}
+
+.bg-card\/100 {
+  background-color: hsl(var(--card) / 1);
+}
+
+.bg-card\/15 {
+  background-color: hsl(var(--card) / 0.15);
+}
+
+.bg-card\/20 {
+  background-color: hsl(var(--card) / 0.2);
+}
+
+.bg-card\/25 {
+  background-color: hsl(var(--card) / 0.25);
+}
+
+.bg-card\/30 {
+  background-color: hsl(var(--card) / 0.3);
+}
+
+.bg-card\/35 {
+  background-color: hsl(var(--card) / 0.35);
+}
+
+.bg-card\/40 {
+  background-color: hsl(var(--card) / 0.4);
+}
+
+.bg-card\/45 {
+  background-color: hsl(var(--card) / 0.45);
+}
+
+.bg-card\/5 {
+  background-color: hsl(var(--card) / 0.05);
+}
+
+.bg-card\/50 {
+  background-color: hsl(var(--card) / 0.5);
+}
+
+.bg-card\/55 {
+  background-color: hsl(var(--card) / 0.55);
+}
+
+.bg-card\/60 {
+  background-color: hsl(var(--card) / 0.6);
+}
+
+.bg-card\/65 {
+  background-color: hsl(var(--card) / 0.65);
+}
+
+.bg-card\/70 {
+  background-color: hsl(var(--card) / 0.7);
+}
+
+.bg-card\/75 {
+  background-color: hsl(var(--card) / 0.75);
+}
+
+.bg-card\/80 {
+  background-color: hsl(var(--card) / 0.8);
+}
+
+.bg-card\/85 {
+  background-color: hsl(var(--card) / 0.85);
+}
+
+.bg-card\/90 {
+  background-color: hsl(var(--card) / 0.9);
+}
+
+.bg-card\/95 {
+  background-color: hsl(var(--card) / 0.95);
+}
+
+.bg-foreground {
+  background-color: hsl(var(--foreground));
+}
+
+.bg-foreground\/0 {
+  background-color: hsl(var(--foreground) / 0);
+}
+
+.bg-foreground\/10 {
+  background-color: hsl(var(--foreground) / 0.1);
+}
+
+.bg-foreground\/100 {
+  background-color: hsl(var(--foreground) / 1);
+}
+
+.bg-foreground\/15 {
+  background-color: hsl(var(--foreground) / 0.15);
+}
+
+.bg-foreground\/20 {
+  background-color: hsl(var(--foreground) / 0.2);
+}
+
+.bg-foreground\/25 {
+  background-color: hsl(var(--foreground) / 0.25);
+}
+
+.bg-foreground\/30 {
+  background-color: hsl(var(--foreground) / 0.3);
+}
+
+.bg-foreground\/35 {
+  background-color: hsl(var(--foreground) / 0.35);
+}
+
+.bg-foreground\/40 {
+  background-color: hsl(var(--foreground) / 0.4);
+}
+
+.bg-foreground\/45 {
+  background-color: hsl(var(--foreground) / 0.45);
+}
+
+.bg-foreground\/5 {
+  background-color: hsl(var(--foreground) / 0.05);
+}
+
+.bg-foreground\/50 {
+  background-color: hsl(var(--foreground) / 0.5);
+}
+
+.bg-foreground\/55 {
+  background-color: hsl(var(--foreground) / 0.55);
+}
+
+.bg-foreground\/60 {
+  background-color: hsl(var(--foreground) / 0.6);
+}
+
+.bg-foreground\/65 {
+  background-color: hsl(var(--foreground) / 0.65);
+}
+
+.bg-foreground\/70 {
+  background-color: hsl(var(--foreground) / 0.7);
+}
+
+.bg-foreground\/75 {
+  background-color: hsl(var(--foreground) / 0.75);
+}
+
+.bg-foreground\/80 {
+  background-color: hsl(var(--foreground) / 0.8);
+}
+
+.bg-foreground\/85 {
+  background-color: hsl(var(--foreground) / 0.85);
+}
+
+.bg-foreground\/90 {
+  background-color: hsl(var(--foreground) / 0.9);
+}
+
+.bg-foreground\/95 {
+  background-color: hsl(var(--foreground) / 0.95);
+}
+
+.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-bl {
+  background-image: linear-gradient(to bottom left, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-l {
+  background-image: linear-gradient(to left, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-t {
+  background-image: linear-gradient(to top, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-tl {
+  background-image: linear-gradient(to top left, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-tr {
+  background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+}
+
+.from-blue-50 {
+  --tw-gradient-from: #eff6ff var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(239 246 255 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.to-indigo-100 {
+  --tw-gradient-to: #e0e7ff var(--tw-gradient-to-position);
+}
+
+.text-card-foreground {
+  color: hsl(var(--card-foreground));
+}
+
+.text-card-foreground\/0 {
+  color: hsl(var(--card-foreground) / 0);
+}
+
+.text-card-foreground\/10 {
+  color: hsl(var(--card-foreground) / 0.1);
+}
+
+.text-card-foreground\/100 {
+  color: hsl(var(--card-foreground) / 1);
+}
+
+.text-card-foreground\/15 {
+  color: hsl(var(--card-foreground) / 0.15);
+}
+
+.text-card-foreground\/20 {
+  color: hsl(var(--card-foreground) / 0.2);
+}
+
+.text-card-foreground\/25 {
+  color: hsl(var(--card-foreground) / 0.25);
+}
+
+.text-card-foreground\/30 {
+  color: hsl(var(--card-foreground) / 0.3);
+}
+
+.text-card-foreground\/35 {
+  color: hsl(var(--card-foreground) / 0.35);
+}
+
+.text-card-foreground\/40 {
+  color: hsl(var(--card-foreground) / 0.4);
+}
+
+.text-card-foreground\/45 {
+  color: hsl(var(--card-foreground) / 0.45);
+}
+
+.text-card-foreground\/5 {
+  color: hsl(var(--card-foreground) / 0.05);
+}
+
+.text-card-foreground\/50 {
+  color: hsl(var(--card-foreground) / 0.5);
+}
+
+.text-card-foreground\/55 {
+  color: hsl(var(--card-foreground) / 0.55);
+}
+
+.text-card-foreground\/60 {
+  color: hsl(var(--card-foreground) / 0.6);
+}
+
+.text-card-foreground\/65 {
+  color: hsl(var(--card-foreground) / 0.65);
+}
+
+.text-card-foreground\/70 {
+  color: hsl(var(--card-foreground) / 0.7);
+}
+
+.text-card-foreground\/75 {
+  color: hsl(var(--card-foreground) / 0.75);
+}
+
+.text-card-foreground\/80 {
+  color: hsl(var(--card-foreground) / 0.8);
+}
+
+.text-card-foreground\/85 {
+  color: hsl(var(--card-foreground) / 0.85);
+}
+
+.text-card-foreground\/90 {
+  color: hsl(var(--card-foreground) / 0.9);
+}
+
+.text-card-foreground\/95 {
+  color: hsl(var(--card-foreground) / 0.95);
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-foreground\/0 {
+  color: hsl(var(--foreground) / 0);
+}
+
+.text-foreground\/10 {
+  color: hsl(var(--foreground) / 0.1);
+}
+
+.text-foreground\/100 {
+  color: hsl(var(--foreground) / 1);
+}
+
+.text-foreground\/15 {
+  color: hsl(var(--foreground) / 0.15);
+}
+
+.text-foreground\/20 {
+  color: hsl(var(--foreground) / 0.2);
+}
+
+.text-foreground\/25 {
+  color: hsl(var(--foreground) / 0.25);
+}
+
+.text-foreground\/30 {
+  color: hsl(var(--foreground) / 0.3);
+}
+
+.text-foreground\/35 {
+  color: hsl(var(--foreground) / 0.35);
+}
+
+.text-foreground\/40 {
+  color: hsl(var(--foreground) / 0.4);
+}
+
+.text-foreground\/45 {
+  color: hsl(var(--foreground) / 0.45);
+}
+
+.text-foreground\/5 {
+  color: hsl(var(--foreground) / 0.05);
+}
+
+.text-foreground\/50 {
+  color: hsl(var(--foreground) / 0.5);
+}
+
+.text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.55);
+}
+
+.text-foreground\/60 {
+  color: hsl(var(--foreground) / 0.6);
+}
+
+.text-foreground\/65 {
+  color: hsl(var(--foreground) / 0.65);
+}
+
+.text-foreground\/70 {
+  color: hsl(var(--foreground) / 0.7);
+}
+
+.text-foreground\/75 {
+  color: hsl(var(--foreground) / 0.75);
+}
+
+.text-foreground\/80 {
+  color: hsl(var(--foreground) / 0.8);
+}
+
+.text-foreground\/85 {
+  color: hsl(var(--foreground) / 0.85);
+}
+
+.text-foreground\/90 {
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.text-foreground\/95 {
+  color: hsl(var(--foreground) / 0.95);
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-muted-foreground\/0 {
+  color: hsl(var(--muted-foreground) / 0);
+}
+
+.text-muted-foreground\/10 {
+  color: hsl(var(--muted-foreground) / 0.1);
+}
+
+.text-muted-foreground\/100 {
+  color: hsl(var(--muted-foreground) / 1);
+}
+
+.text-muted-foreground\/15 {
+  color: hsl(var(--muted-foreground) / 0.15);
+}
+
+.text-muted-foreground\/20 {
+  color: hsl(var(--muted-foreground) / 0.2);
+}
+
+.text-muted-foreground\/25 {
+  color: hsl(var(--muted-foreground) / 0.25);
+}
+
+.text-muted-foreground\/30 {
+  color: hsl(var(--muted-foreground) / 0.3);
+}
+
+.text-muted-foreground\/35 {
+  color: hsl(var(--muted-foreground) / 0.35);
+}
+
+.text-muted-foreground\/40 {
+  color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.text-muted-foreground\/45 {
+  color: hsl(var(--muted-foreground) / 0.45);
+}
+
+.text-muted-foreground\/5 {
+  color: hsl(var(--muted-foreground) / 0.05);
+}
+
+.text-muted-foreground\/50 {
+  color: hsl(var(--muted-foreground) / 0.5);
+}
+
+.text-muted-foreground\/55 {
+  color: hsl(var(--muted-foreground) / 0.55);
+}
+
+.text-muted-foreground\/60 {
+  color: hsl(var(--muted-foreground) / 0.6);
+}
+
+.text-muted-foreground\/65 {
+  color: hsl(var(--muted-foreground) / 0.65);
+}
+
+.text-muted-foreground\/70 {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+.text-muted-foreground\/75 {
+  color: hsl(var(--muted-foreground) / 0.75);
+}
+
+.text-muted-foreground\/80 {
+  color: hsl(var(--muted-foreground) / 0.8);
+}
+
+.text-muted-foreground\/85 {
+  color: hsl(var(--muted-foreground) / 0.85);
+}
+
+.text-muted-foreground\/90 {
+  color: hsl(var(--muted-foreground) / 0.9);
+}
+
+.text-muted-foreground\/95 {
+  color: hsl(var(--muted-foreground) / 0.95);
+}
+
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+/* System font stacks */
+
+:root {
+  --font-geist-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-geist-mono: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+}
+
+/* Fix for missing Leaflet marker icons */
+
+.leaflet-default-icon-path {
+  background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
+}
+
+.leaflet-retina .leaflet-default-icon-path {
+  background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png');
+}
+
+.leaflet-default-shadow-path {
+  background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png');
+}
+
+/* Map container fixes - 解决地图容器尺寸问题 */
+
+.map-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 400px !important;
+  display: block !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+  /* 确保背景透明 */
+}
+
+.leaflet-map-container {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  z-index: 0 !important;
+  background: transparent !important;
+  /* 确保背景透明 */
+}
+
+/* Ensure leaflet maps fill their containers */
+
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  background: transparent !important;
+  /* 确保背景透明 */
+}
+
+/* Fix for tile layer rendering issues */
+
+.leaflet-tile-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+.leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  position: absolute !important;
+}
+
+/* Prevent tile layer from showing diagonal patterns */
+
+.leaflet-tile-pane {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate3d(0, 0, 0) !important;
+  /* 强制GPU加速 */
+}
+
+/* Fix for zoom levels and tile alignment */
+
+.leaflet-zoom-animated {
+  transform-origin: 0 0 !important;
+}
+
+/* Ensure proper map pane stacking */
+
+.leaflet-map-pane {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix for flex layouts that might interfere with map sizing */
+
+.flex .map-container,
+.flex .leaflet-map-container,
+.flex .leaflet-container {
+  min-height: 400px !important;
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+}
+
+/* Grid layout fixes */
+
+.grid .map-container,
+.grid .leaflet-map-container,
+.grid .leaflet-container {
+  min-height: 400px !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-primary: 221.2 83.2% 53.3%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222.2 84% 4.9%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+  --sidebar-ring: 221.2 83.2% 53.3%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 84% 4.9%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 94.1%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+  --sidebar: 222.2 84% 4.9%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 217.2 91.2% 59.8%;
+  --sidebar-primary-foreground: 222.2 84% 4.9%;
+  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217.2 32.6% 17.5%;
+  --sidebar-ring: 224.3 76.3% 94.1%;
+}
+
+/* Base styles */
+
+* {
+  border-color: hsl(var(--border));
+  outline-color: hsl(var(--ring) / 0.5);
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Additional utility classes for better styling */
+
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom scrollbar styles */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+/* Animation classes */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Map specific styles */
+
+.leaflet-control-layers {
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+}
+
+.leaflet-control-zoom {
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
+  border-radius: 8px;
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 768px) {
+  .map-container {
+    min-height: 300px !important;
+  }
+}
+
+/* Dark mode specific styles */
+
+.dark .leaflet-control-layers {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.dark .leaflet-control-zoom {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+}
+
+/* Loading spinner */
+
+.spinner {
+  border: 3px solid hsl(var(--muted));
+  border-top: 3px solid hsl(var(--primary));
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Card hover effects */
+
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Button animations */
+
+.btn-animate {
+  transition: all 0.2s ease;
+}
+
+.btn-animate:hover {
+  transform: scale(1.05);
+}
+
+.btn-animate:active {
+  transform: scale(0.95);
+}

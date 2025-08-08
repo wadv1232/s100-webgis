@@ -586,7 +586,7 @@ export default function NodeMap({ nodes, selectedNode, onNodeSelect, onNodeUpdat
               编辑模式已启用
               {editingNode ? (
                 <div className="mt-1 text-blue-600">
-                  点击地图更新 "{editingNode.name}" 位置
+                  点击地图更新 &quot;{editingNode.name}&quot; 位置
                 </div>
               ) : (
                 <div className="mt-1 text-gray-600">

@@ -519,7 +519,7 @@ export default function NodeDetailPanel({
                 <AlertDialogHeader>
                   <AlertDialogTitle>确认删除</AlertDialogTitle>
                   <AlertDialogDescription>
-                    确定要删除节点 "{selectedNode.name}" 吗？此操作不可撤销。
+                    确定要删除节点 &quot;{selectedNode.name}&quot; 吗？此操作不可撤销。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -1063,7 +1063,7 @@ export default function NodeDetailPanel({
                 <AlertDialogHeader>
                   <AlertDialogTitle>确认删除</AlertDialogTitle>
                   <AlertDialogDescription>
-                    确定要删除节点 "{selectedNode.name}" 吗？此操作不可撤销。
+                    确定要删除节点 &quot;{selectedNode.name}&quot; 吗？此操作不可撤销。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

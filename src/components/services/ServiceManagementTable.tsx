@@ -353,7 +353,7 @@ export default function ServiceManagementTable({ initialServices = [] }: Service
                         <Settings className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-gray-500">暂无服务数据</p>
                         <p className="text-sm text-gray-400 mt-1">
-                          点击"注册新服务"按钮添加第一个服务
+                          点击&quot;注册新服务&quot;按钮添加第一个服务
                         </p>
                       </div>
                     </TableCell>

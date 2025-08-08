@@ -1,17 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // 启用严格模式以获得更好的开发体验
   reactStrictMode: true,
   experimental: {
     // 优化开发模式下的性能
     optimizePackageImports: ['lucide-react', '@radix-ui/react-*'],
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   // 配置 webpack 以更好地处理开发环境
   webpack: (config, { dev, isServer }) => {

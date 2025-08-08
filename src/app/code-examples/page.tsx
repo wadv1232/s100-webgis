@@ -531,7 +531,60 @@ echo "输出目录: $OUTPUT_DIR"`,
   }
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        // 在安全上下文中使用现代 Clipboard API
+        navigator.clipboard.writeText(text).then(() => {
+          // 可选：显示成功提示
+          console.log('Text copied to clipboard successfully')
+        }).catch(err => {
+          console.warn('Failed to copy text using Clipboard API:', err)
+          // 降级到传统方法
+          fallbackCopyTextToClipboard(text)
+        })
+      } else {
+        // 降级到传统方法
+        fallbackCopyTextToClipboard(text)
+      }
+    } catch (error) {
+      console.warn('Error copying to clipboard:', error)
+      // 最后的降级方案
+      fallbackCopyTextToClipboard(text)
+    }
+  }
+
+  // 降级的复制方法
+  const fallbackCopyTextToClipboard = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      
+      // 使文本区域不可见
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        // 执行复制命令
+        const successful = document.execCommand('copy')
+        if (successful) {
+          console.log('Text copied using fallback method')
+        } else {
+          console.warn('Fallback copy method failed')
+        }
+      } catch (err) {
+        console.error('Fallback copy method failed:', err)
+      }
+      
+      // 清理
+      document.body.removeChild(textArea)
+    } catch (error) {
+      console.error('Fallback copy method failed:', error)
+    }
   }
 
   const filteredExamples = selectedCategory === 'all' 
@@ -563,7 +616,7 @@ echo "输出目录: $OUTPUT_DIR"`,
               onClick={() => setSelectedLanguage('javascript')}
               className="flex items-center gap-2"
             >
-              <Javascript className="h-4 w-4" />
+              <Braces className="h-4 w-4" />
               JavaScript
             </Button>
             <Button
@@ -572,7 +625,7 @@ echo "输出目录: $OUTPUT_DIR"`,
               onClick={() => setSelectedLanguage('python')}
               className="flex items-center gap-2"
             >
-              <Python className="h-4 w-4" />
+              <Coffee className="h-4 w-4" />
               Python
             </Button>
             <Button
@@ -581,7 +634,7 @@ echo "输出目录: $OUTPUT_DIR"`,
               onClick={() => setSelectedLanguage('java')}
               className="flex items-center gap-2"
             >
-              <Java className="h-4 w-4" />
+              <Package className="h-4 w-4" />
               Java
             </Button>
             <Button
@@ -702,14 +755,14 @@ echo "输出目录: $OUTPUT_DIR"`,
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <Npm className="h-8 w-8 text-red-500" />
+                <Package className="h-8 w-8 text-red-500" />
                 <div>
                   <h4 className="font-medium">NPM包</h4>
                   <p className="text-sm text-gray-600">JavaScript SDK包</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 border rounded-lg">
-                <Python className="h-8 w-8 text-blue-500" />
+                <Coffee className="h-8 w-8 text-blue-500" />
                 <div>
                   <h4 className="font-medium">PyPI包</h4>
                   <p className="text-sm text-gray-600">Python SDK包</p>

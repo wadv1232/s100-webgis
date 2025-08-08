@@ -41,39 +41,11 @@ import {
   calculateBoundingBox
 } from '@/lib/utils/geo-utils'
 
-// Dynamically import map components to avoid SSR issues
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
-)
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-)
-const Marker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Marker),
-  { ssr: false }
-)
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
-  { ssr: false }
-)
-const GeoJSON = dynamic(
-  () => import('react-leaflet').then((mod) => mod.GeoJSON),
-  { ssr: false }
-)
-const WMSTileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.WMSTileLayer),
-  { ssr: false }
-)
-const ZoomControl = dynamic(
-  () => import('react-leaflet').then((mod) => mod.ZoomControl),
-  { ssr: false }
-)
-const ScaleControl = dynamic(
-  () => import('react-leaflet').then((mod) => mod.ScaleControl),
-  { ssr: false }
-)
+// Import Leaflet dynamically for better control
+let L: any
+if (typeof window !== 'undefined') {
+  // Don't import immediately, we'll import it when needed
+}
 
 // Types
 interface NodeType {
@@ -155,8 +127,9 @@ export default function S100ServiceMap({
   
   // 新增状态：用于解决地图容器尺寸问题
   const [isMounted, setIsMounted] = useState(false)
-  const [mapKey, setMapKey] = useState(0) // 用于强制重新挂载地图
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 }) // 容器尺寸状态
+  const [isMapLoaded, setIsMapLoaded] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(false)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
@@ -168,112 +141,256 @@ export default function S100ServiceMap({
     }
   }, [baseMapConfig])
 
-  // 组件挂载和尺寸处理 - 核心解决方案
+  // 地图初始化函数
+  const initializeMap = async () => {
+    if (mapRef.current) {
+      console.log('Map already initialized')
+      return
+    }
+
+    setIsInitializing(true)
+    
+    try {
+      console.log('Starting map initialization...')
+      
+      // Dynamically import Leaflet
+      const leafletModule = await import('leaflet')
+      await import('leaflet/dist/leaflet.css')
+      
+      L = leafletModule.default || leafletModule
+      
+      console.log('Leaflet imported successfully')
+      
+      // Fix for default markers in Leaflet
+      delete (L.Icon.Default.prototype as any)._getIconUrl
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      })
+      
+      console.log('Map container:', mapContainerRef.current)
+      
+      if (!mapContainerRef.current) {
+        console.error('Map container not found')
+        setIsInitializing(false)
+        return
+      }
+      
+      console.log('Initializing Leaflet map...')
+      
+      // 清理现有地图
+      cleanupMap()
+      
+      // 创建新地图实例
+      const map = L.map(mapContainerRef.current, {
+        center: mapCenter,
+        zoom: mapZoom,
+        minZoom: 1,
+        maxZoom: 18,
+        zoomControl: false,
+        attributionControl: false,
+        worldCopyJump: false,
+        maxBounds: [[-90, -180], [90, 180]],
+        maxBoundsViscosity: 1.0
+      })
+      
+      mapRef.current = map
+      
+      // 添加缩放控制
+      L.control.zoom({
+        position: 'topright'
+      }).addTo(map)
+      
+      // 添加比例尺
+      L.control.scale({
+        position: 'bottomleft',
+        metric: true,
+        imperial: false,
+        maxWidth: 200
+      }).addTo(map)
+      
+      // 添加基础图层
+      addBaseLayer(map)
+      
+      // 添加节点标记
+      addNodeMarkers(map)
+      
+      // 添加服务图层
+      addServiceLayers(map)
+      
+      console.log('Map initialized successfully')
+      setIsMapLoaded(true)
+      
+    } catch (error) {
+      console.error('Error initializing map:', error)
+      console.error('Error details:', error instanceof Error ? error.message : error)
+    } finally {
+      setIsInitializing(false)
+    }
+  }
+
+  // 组件挂载和尺寸处理 - 直接Leaflet实现
   useEffect(() => {
     setIsMounted(true)
     
-    // 清理之前的观察者
-    if (resizeObserverRef.current) {
-      resizeObserverRef.current.disconnect()
-    }
-    
-    // 创建 ResizeObserver 监听容器尺寸变化
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        
-        // 更新容器尺寸状态
-        setContainerSize({ width, height })
-        
-        // 只有当容器尺寸有效时才处理地图
-        if (width > 100 && height > 100) { // 设置最小阈值避免小尺寸
-          console.log('Container size changed:', { width, height })
-          
-          // 方法1: 延迟调用 invalidateSize
-          if (mapRef.current) {
-            setTimeout(() => {
-              try {
-                mapRef.current.invalidateSize()
-                console.log('Map size invalidated successfully')
-              } catch (error) {
-                console.warn('Failed to invalidate map size:', error)
-              }
-            }, 100) // 增加延迟确保 DOM 更新完成
-          }
-          
-          // 方法2: 如果 invalidateSize 失败，强制重新挂载
-          else {
-            setMapKey(prev => prev + 1)
-          }
-        }
-      }
-    })
-    
-    // 开始观察容器
-    if (mapContainerRef.current) {
-      observer.observe(mapContainerRef.current)
-      resizeObserverRef.current = observer
-      
-      // 初始检查容器尺寸
-      const initialRect = mapContainerRef.current.getBoundingClientRect()
-      console.log('Initial container size:', {
-        width: initialRect.width,
-        height: initialRect.height
-      })
-      
-      // 如果初始尺寸太小，延迟后重新挂载
-      if (initialRect.width < 100 || initialRect.height < 100) {
-        setTimeout(() => {
-          setMapKey(prev => prev + 1)
-        }, 200)
-      }
-    }
-    
     return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect()
-      }
+      // 清理地图
+      cleanupMap()
     }
   }, [])
 
+  // 清理地图函数
+  const cleanupMap = () => {
+    if (mapRef.current && L) {
+      try {
+        console.log('Cleaning up map...')
+        
+        // 移除所有事件监听器
+        mapRef.current.off()
+        
+        // 清理所有图层
+        mapRef.current.eachLayer((layer: any) => {
+          mapRef.current.removeLayer(layer)
+        })
+        
+        // 移除地图容器
+        const container = mapRef.current.getContainer()
+        if (container && container.parentNode) {
+          container.parentNode.removeChild(container)
+        }
+        
+        // 清理引用
+        mapRef.current = null
+        
+        console.log('Map cleaned up successfully')
+      } catch (error) {
+        console.warn('Error cleaning up map:', error)
+        mapRef.current = null
+      }
+    }
+  }
+
+  // 添加基础图层
+  const addBaseLayer = (map: any) => {
+    if (!L) return
+    
+    let tileUrl: string
+    let attribution: string
+    
+    switch (baseLayer) {
+      case 'satellite':
+        tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}'
+        attribution = '&copy; <a href="https://www.esri.com/">Esri</a> | <strong>显示坐标: WGS84</strong>'
+        break
+      case 'terrain':
+        tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+        attribution = '&copy; <a href="https://opentopomap.org/">OpenTopoMap</a> | <strong>显示坐标: WGS84</strong>'
+        break
+      case 'custom':
+        if (baseMapConfig?.customUrl) {
+          tileUrl = baseMapConfig.customUrl
+          attribution = baseMapConfig.attribution || 'Custom Base Map'
+        } else {
+          tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <strong>显示坐标: WGS84</strong>'
+        }
+        break
+      default:
+        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <strong>显示坐标: WGS84</strong>'
+    }
+    
+    L.tileLayer(tileUrl, {
+      attribution,
+      minZoom: baseMapConfig?.minZoom || 1,
+      maxZoom: baseMapConfig?.maxZoom || 18,
+      noWrap: true,
+      updateWhenIdle: false,
+      updateWhenZooming: true,
+      keepBuffer: 4,
+      bounds: [[-90, -180], [90, 180]],
+      maxBounds: [[-90, -180], [90, 180]],
+      maxBoundsViscosity: 1.0
+    }).addTo(map)
+  }
+
+  // 添加节点标记
+  const addNodeMarkers = (map: any) => {
+    if (!L) return
+    
+    if (!mapLayers.find(l => l.id === 'nodes')?.visible) {
+      return
+    }
+    
+    nodes.forEach((node) => {
+      const isSelected = editingNode?.id === node.id
+      const color = getNodeColor(node.healthStatus)
+      
+      // 创建自定义图标
+      const icon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      })
+      
+      const marker = L.marker([node.location.lat, node.location.lng], { icon })
+      
+      // 添加点击事件
+      marker.on('click', () => {
+        handleNodeSelect(node)
+      })
+      
+      // 添加弹出窗口
+      const popupContent = `
+        <div class="p-2">
+          <h3 class="font-semibold">${node.name}</h3>
+          <p class="text-sm text-gray-600">${node.description}</p>
+          <div class="mt-2 flex items-center gap-2">
+            <span class="px-2 py-1 text-xs border rounded">${node.type}</span>
+            <span class="text-xs">${node.healthStatus}</span>
+          </div>
+          <div class="mt-2">
+            <p class="text-sm font-medium">服务: ${node.services?.length || 0}</p>
+          </div>
+        </div>
+      `
+      
+      marker.bindPopup(popupContent)
+      marker.addTo(map)
+    })
+  }
+
+  // 添加服务图层
+  const addServiceLayers = (map: any) => {
+    if (!L) return
+    
+    serviceLayers.forEach((service) => {
+      const layer = mapLayers.find(l => l.id === service.product.toLowerCase())
+      if (!layer?.visible) return
+      
+      L.tileLayer.wms(`${service.endpoint}?SERVICE=WMS&VERSION=${service.version}&REQUEST=GetMap`, {
+        layers: service.product,
+        styles: '',
+        format: 'image/png',
+        transparent: true,
+        opacity: layer.opacity
+      }).addTo(map)
+    })
+  }
+
   // 处理影响地图容器尺寸的状态变化
   useEffect(() => {
-    console.log('Layout-related state changed, updating map...')
-    // 延迟处理以确保 DOM 更新完成
-    const timer = setTimeout(() => {
-      if (mapRef.current) {
-        try {
-          mapRef.current.invalidateSize()
-          console.log('Map size invalidated after state change')
-        } catch (error) {
-          console.warn('Failed to invalidate map size after state change:', error)
-          // 如果 invalidateSize 失败，强制重新挂载
-          setMapKey(prev => prev + 1)
-        }
-      } else {
-        // 如果地图不存在，强制重新挂载
-        setMapKey(prev => prev + 1)
+    console.log('Layout-related state changed, reinitializing map...')
+    // 重新初始化地图
+    cleanupMap()
+    setTimeout(() => {
+      if (isMapLoaded) {
+        initializeMap()
       }
-    }, 150) // 增加延迟确保 DOM 完全更新
-    
-    return () => clearTimeout(timer)
-  }, [fullscreen, height, editingNode, baseLayer]) // 添加 baseLayer 变化监听
-
-  // 可靠的 invalidateSize 调用 - 备用方案
-  useEffect(() => {
-    if (mapRef.current && isMounted && containerSize.width > 100 && containerSize.height > 100) {
-      const timeoutId = setTimeout(() => {
-        try {
-          mapRef.current.invalidateSize()
-          console.log('Backup map size invalidation successful')
-        } catch (error) {
-          console.warn('Backup map size invalidation failed:', error)
-        }
-      }, 200) // 更长的延迟确保所有更新完成
-
-      return () => clearTimeout(timeoutId)
-    }
-  }, [mapKey, isMounted, containerSize])
+    }, 100)
+  }, [fullscreen, height, editingNode, baseLayer])
 
   // Initialize map layers
   const [mapLayers, setMapLayers] = useState<MapLayer[]>([
@@ -651,223 +768,41 @@ export default function S100ServiceMap({
             }}
             className="map-container"
           >
+            {!isMapLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                <div className="text-center">
+                  <div className="text-gray-500 mb-4">
+                    {isInitializing ? '正在初始化地图...' : '地图未加载'}
+                  </div>
+                  {!isInitializing && (
+                    <button
+                      onClick={initializeMap}
+                      disabled={isInitializing}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isInitializing ? '加载中...' : '加载地图'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             {isMounted && (
-              <MapContainer
-                key={mapKey} // 关键：使用 key 强制重新挂载
-                center={mapCenter}
-                zoom={mapZoom}
+              <div 
+                ref={mapContainerRef}
                 style={{ 
                   height: '100%', 
                   width: '100%',
-                  display: 'block', // 确保 block 显示
-                  position: 'absolute', // 绝对定位填充容器
+                  display: 'block',
+                  position: 'absolute',
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
                   zIndex: 0,
-                  background: 'transparent' // 确保背景透明
+                  background: 'transparent'
                 }}
-                ref={mapRef}
                 className="leaflet-map-container"
-                worldCopyJump={false} // 禁用世界复制跳跃
-                maxBounds={[[-90, -180], [90, 180]]} // 限制世界边界
-                maxBoundsViscosity={1.0} // 严格边界限制
-                minZoom={1} // 最小缩放级别
-                maxZoom={18} // 最大缩放级别
-                zoomControl={false} // 禁用默认缩放控制，使用自定义的
-                attributionControl={false} // 禁用默认归属控制
-                whenCreated={(map) => {
-                  console.log('Map created successfully with Web Mercator projection', map)
-                  mapRef.current = map
-                  
-                  // 设置地图边界
-                  map.setMaxBounds([[-90, -180], [90, 180]])
-                  
-                  // 地图创建后立即调用 invalidateSize
-                  setTimeout(() => {
-                    try {
-                      map.invalidateSize()
-                      console.log('Initial map size invalidation completed')
-                      
-                      // 额外的尺寸验证和调整
-                      const container = map.getContainer()
-                      if (container) {
-                        const rect = container.getBoundingClientRect()
-                        console.log('Map container dimensions after creation:', {
-                          width: rect.width,
-                          height: rect.height
-                        })
-                        
-                        // 如果尺寸仍然不正确，强制重新调整
-                        if (rect.width < 100 || rect.height < 100) {
-                          setTimeout(() => {
-                            map.invalidateSize()
-                            console.log('Forced second invalidation due to small dimensions')
-                          }, 200)
-                        }
-                      }
-                    } catch (error) {
-                      console.warn('Initial map size invalidation failed:', error)
-                    }
-                  }, 100)
-                }}
-              >
-              {/* MapUpdater component for dynamic map changes */}
-              <MapUpdater 
-                center={mapCenter as [number, number]} 
-                zoom={mapZoom} 
-                baseLayer={baseLayer} 
               />
-              
-              {/* Scale Control */}
-              <ScaleControl 
-                position="bottomleft" 
-                metric={true} 
-                imperial={false}
-                maxWidth={200}
-              />
-              
-              {/* Base Map Layers - Web Mercator with WGS84 coordinate display */}
-              {baseLayer === 'osm' && (
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <strong>显示坐标: WGS84</strong>'
-                  minZoom={baseMapConfig?.minZoom || 1}
-                  maxZoom={baseMapConfig?.maxZoom || 18}
-                  noWrap={true} // 防止地图重复
-                  updateWhenIdle={false} // 确保及时更新
-                  updateWhenZooming={true} // 缩放时更新
-                  keepBuffer={4} // 增加缓冲区减少瓦片闪烁
-                  bounds={[[-90, -180], [90, 180]]} // 限制世界范围
-                  maxBounds={[[-90, -180], [90, 180]]} // 限制最大边界
-                  maxBoundsViscosity={1.0} // 严格边界限制
-                />
-              )}
-              {baseLayer === 'satellite' && (
-                <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}"
-                  attribution='&copy; <a href="https://www.esri.com/">Esri</a> | <strong>显示坐标: WGS84</strong>'
-                  minZoom={baseMapConfig?.minZoom || 1}
-                  maxZoom={baseMapConfig?.maxZoom || 18}
-                  noWrap={true} // 防止地图重复
-                  updateWhenIdle={false} // 确保及时更新
-                  updateWhenZooming={true} // 缩放时更新
-                  keepBuffer={4} // 增加缓冲区减少瓦片闪烁
-                  bounds={[[ -90, -180], [90, 180]]} // 限制世界范围
-                  maxBounds={[[ -90, -180], [90, 180]]} // 限制最大边界
-                  maxBoundsViscosity={1.0} // 严格边界限制
-                />
-              )}
-              {baseLayer === 'terrain' && (
-                <TileLayer
-                  url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://opentopomap.org/">OpenTopoMap</a> | <strong>显示坐标: WGS84</strong>'
-                  minZoom={baseMapConfig?.minZoom || 1}
-                  maxZoom={baseMapConfig?.maxZoom || 18}
-                  noWrap={true} // 防止地图重复
-                  updateWhenIdle={false} // 确保及时更新
-                  updateWhenZooming={true} // 缩放时更新
-                  keepBuffer={4} // 增加缓冲区减少瓦片闪烁
-                  bounds={[[ -90, -180], [90, 180]]} // 限制世界范围
-                  maxBounds={[[ -90, -180], [90, 180]]} // 限制最大边界
-                  maxBoundsViscosity={1.0} // 严格边界限制
-                />
-              )}
-              {baseLayer === 'custom' && baseMapConfig?.customUrl && (
-                <TileLayer
-                  url={baseMapConfig.customUrl}
-                  attribution={baseMapConfig.attribution || 'Custom Base Map'}
-                  minZoom={baseMapConfig.minZoom || 1}
-                  maxZoom={baseMapConfig.maxZoom || 18}
-                  noWrap={true} // 防止地图重复
-                  updateWhenIdle={false} // 确保及时更新
-                  updateWhenZooming={true} // 缩放时更新
-                  keepBuffer={4} // 增加缓冲区减少瓦片闪烁
-                  bounds={[[ -90, -180], [90, 180]]} // 限制世界范围
-                  maxBounds={[[ -90, -180], [90, 180]]} // 限制最大边界
-                  maxBoundsViscosity={1.0} // 严格边界限制
-                />
-              )}
-
-              {/* S-100 WMS Service Layers */}
-              {serviceLayers.map((service) => {
-                const layer = mapLayers.find(l => l.id === service.product.toLowerCase())
-                if (!layer?.visible) return null
-                
-                return (
-                  <WMSTileLayer
-                    key={service.id}
-                    url={`${service.endpoint}?SERVICE=WMS&VERSION=${service.version}&REQUEST=GetMap`}
-                    layers={service.product}
-                    styles=""
-                    format="image/png"
-                    transparent={true}
-                    opacity={layer.opacity}
-                  />
-                )
-              })}
-
-              {/* Node Markers */}
-              {mapLayers.find(l => l.id === 'nodes')?.visible && nodes.map((node) => {
-                const isSelected = editingNode?.id === node.id
-                const color = getNodeColor(node.healthStatus)
-                
-                return (
-                  <Marker
-                    key={node.id}
-                    position={[node.location.lat, node.location.lng]}
-                    eventHandlers={{
-                      click: () => handleNodeSelect(node)
-                    }}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold">{node.name}</h3>
-                        <p className="text-sm text-gray-600">{node.description}</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <Badge variant="outline">{node.type}</Badge>
-                          <div className="flex items-center gap-1">
-                            {getHealthIcon(node.healthStatus)}
-                            <span className="text-xs">{node.healthStatus}</span>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-sm font-medium">服务: {node.services?.length || 0}</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(node.services || []).slice(0, 3).map(service => (
-                              <Badge key={service} variant="secondary" className="text-xs">
-                                {service}
-                              </Badge>
-                            ))}
-                            {(node.services || []).length > 3 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{(node.services || []).length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          className="mt-2 w-full"
-                          onClick={() => handleNodeSelect(node)}
-                        >
-                          查看详情
-                        </Button>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )
-              })}
-
-              <ZoomControl position="topright" />
-              
-              {/* Map Info Display - Coordinates and View Bounds */}
-              <MapInfoDisplay 
-                showCursorCoordinates={true}
-                showViewBounds={true}
-              />
-            </MapContainer>
             )}
           </div>
         </CardContent>

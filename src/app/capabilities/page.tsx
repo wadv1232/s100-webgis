@@ -19,7 +19,7 @@ import {
   Building,
   Anchor,
   Zap,
-  Grid3X3,
+  Grid,
   List,
   BarChart3,
   Eye,
@@ -423,7 +423,7 @@ export default function CapabilitiesPage() {
         <div className="flex justify-between items-center">
           <TabsList>
             <TabsTrigger value="matrix" className="flex items-center gap-2">
-              <Grid3X3 className="h-4 w-4" />
+              <Grid className="h-4 w-4" />
               能力矩阵
             </TabsTrigger>
             <TabsTrigger value="list" className="flex items-center gap-2">

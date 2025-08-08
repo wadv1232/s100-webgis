@@ -978,7 +978,7 @@ export default function NodeMapEnhanced({ nodes, selectedNode, onNodeSelect, onN
               几何编辑模式已启用
               {editingNode ? (
                 <div className="mt-1 text-blue-600">
-                  正在编辑 "{editingNode.name}" 的几何信息
+                  正在编辑 &quot;{editingNode.name}&quot; 的几何信息
                   <div className="mt-1 text-gray-600">
                     使用右上角工具绘制点、多边形或矩形
                   </div>
