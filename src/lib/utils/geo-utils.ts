@@ -48,6 +48,16 @@ export interface CenterPoint {
  */
 export function parseGeoJSON(geojsonString: string): GeoJSONGeometry | null {
   try {
+    // 检查是否为中文描述文本（如"全球范围"、"中国沿海"等）
+    if (typeof geojsonString === 'string' && 
+        (geojsonString.includes('范围') || 
+         geojsonString.includes('区域') || 
+         geojsonString.includes('沿海') ||
+         /^[\u4e00-\u9fa5\s]+$/.test(geojsonString.trim()))) {
+      // 对于中文描述，返回null，让调用者处理
+      return null
+    }
+    
     const geojson = JSON.parse(geojsonString)
     
     // 验证GeoJSON格式
@@ -299,6 +309,15 @@ export function validateGeoJSON(geojsonString: string): { valid: boolean; error?
  */
 export function formatCoverageForDisplay(coverage: string | null): string {
   if (!coverage) return '未设置覆盖范围'
+  
+  // 检查是否为中文描述文本
+  if (typeof coverage === 'string' && 
+      (coverage.includes('范围') || 
+       coverage.includes('区域') || 
+       coverage.includes('沿海') ||
+       /^[\u4e00-\u9fa5\s]+$/.test(coverage.trim()))) {
+    return coverage // 直接返回中文描述
+  }
   
   const geometry = parseGeoJSON(coverage)
   if (!geometry) return '无效的地理数据'

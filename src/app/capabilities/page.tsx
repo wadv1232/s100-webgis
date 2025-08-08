@@ -29,7 +29,7 @@ import {
   Layers,
   Maximize
 } from 'lucide-react'
-import { mockCapabilitiesData, S100_PRODUCTS, SERVICE_TYPES, getProductIcon } from '@/mock-data'
+import { mockCapabilitiesData, SERVICE_TYPES, getProductIcon } from '@/mock-data'
 
 // S-100产品类型
 const S100_PRODUCTS = [
