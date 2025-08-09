@@ -11,6 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import MapUpdater from './MapUpdater'
 import MapInfoDisplay from './MapInfoDisplay'
+import MapLoadingIndicator from './ui/MapLoadingIndicator'
+import CoordinateDisplay from './ui/CoordinateDisplay'
+import MapLegend from './ui/MapLegend'
+import ServiceDetailModal from './ui/ServiceDetailModal'
 import { 
   Activity, 
   Search, 
@@ -130,6 +134,23 @@ export default function S100ServiceMap({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 }) // 容器尺寸状态
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
+  const [mapError, setMapError] = useState<string | null>(null)
+  
+  // 新增状态：坐标显示
+  const [showCoordinates, setShowCoordinates] = useState(true)
+  
+  // 新增状态：图层管理
+  const [layers, setLayers] = useState([
+    { id: 'base', name: '基础地图', type: 'base', visible: true, icon: '🗺️' },
+    { id: 'nodes', name: '节点标记', type: 'node', visible: true, color: '#3b82f6', icon: '📍' },
+    { id: 'services', name: '服务区域', type: 'service', visible: true, color: '#10b981', icon: '🔧' },
+    { id: 'coverage', name: '覆盖范围', type: 'overlay', visible: true, color: '#f59e0b', icon: '📊' }
+  ])
+  
+  // 新增状态：服务详情
+  const [selectedService, setSelectedService] = useState<any>(null)
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
@@ -149,6 +170,7 @@ export default function S100ServiceMap({
     }
 
     setIsInitializing(true)
+    setMapError(null)
     
     try {
       console.log('Starting map initialization...')
@@ -173,6 +195,7 @@ export default function S100ServiceMap({
       
       if (!mapContainerRef.current) {
         console.error('Map container not found')
+        setMapError('地图容器未找到')
         setIsInitializing(false)
         return
       }
@@ -219,14 +242,108 @@ export default function S100ServiceMap({
       // 添加服务图层
       addServiceLayers(map)
       
+      // 添加地图事件监听器
+      addMapEventListeners(map)
+      
       console.log('Map initialized successfully')
       setIsMapLoaded(true)
       
     } catch (error) {
       console.error('Error initializing map:', error)
       console.error('Error details:', error instanceof Error ? error.message : error)
+      setMapError(error instanceof Error ? error.message : '地图初始化失败')
     } finally {
       setIsInitializing(false)
+    }
+  }
+
+  // 添加地图事件监听器
+  const addMapEventListeners = (map: any) => {
+    if (!map) return
+
+    // 监听地图点击事件
+    map.on('click', (e: any) => {
+      console.log('Map clicked at:', e.latlng)
+    })
+
+    // 监听地图加载事件
+    map.on('load', () => {
+      console.log('Map loaded successfully')
+      setIsMapLoaded(true)
+    })
+
+    // 监听错误事件
+    map.on('error', (error: any) => {
+      console.error('Map error:', error)
+      setMapError('地图运行时错误')
+    })
+  }
+
+  // 重试地图初始化
+  const retryMapInitialization = () => {
+    setMapError(null)
+    setIsMapLoaded(false)
+    initializeMap()
+  }
+
+  // 图层切换处理
+  const handleLayerToggle = (layerId: string, visible: boolean) => {
+    setLayers(prev => prev.map(layer => 
+      layer.id === layerId ? { ...layer, visible } : layer
+    ))
+    
+    // 更新地图图层显示
+    if (mapRef.current) {
+      updateMapLayers(mapRef.current)
+    }
+  }
+
+  // 更新地图图层
+  const updateMapLayers = (map: any) => {
+    if (!map || !L) return
+
+    // 根据图层状态更新显示
+    layers.forEach(layer => {
+      const layerElement = document.getElementById(`layer-${layer.id}`)
+      if (layerElement) {
+        layerElement.style.display = layer.visible ? 'block' : 'none'
+      }
+    })
+  }
+
+  // 服务详情处理
+  const handleServiceClick = (service: any) => {
+    setSelectedService(service)
+    setIsServiceModalOpen(true)
+  }
+
+  // 在地图上预览服务
+  const handlePreviewOnMap = (service: any) => {
+    if (mapRef.current && service.coverage) {
+      try {
+        const geometry = parseGeoJSON(service.coverage)
+        if (geometry) {
+          // 在地图上高亮显示服务覆盖范围
+          const layer = L.geoJSON(geometry as any, {
+            style: {
+              color: '#ef4444',
+              weight: 3,
+              fillColor: '#ef4444',
+              fillOpacity: 0.2
+            }
+          }).addTo(mapRef.current)
+          
+          // 调整地图视图到服务范围
+          mapRef.current.fitBounds(layer.getBounds())
+          
+          // 5秒后移除高亮
+          setTimeout(() => {
+            mapRef.current.removeLayer(layer)
+          }, 5000)
+        }
+      } catch (error) {
+        console.error('Error previewing service on map:', error)
+      }
     }
   }
 
@@ -768,24 +885,27 @@ export default function S100ServiceMap({
             }}
             className="map-container"
           >
-            {!isMapLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
-                <div className="text-center">
-                  <div className="text-gray-500 mb-4">
-                    {isInitializing ? '正在初始化地图...' : '地图未加载'}
-                  </div>
-                  {!isInitializing && (
-                    <button
-                      onClick={initializeMap}
-                      disabled={isInitializing}
-                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isInitializing ? '加载中...' : '加载地图'}
-                    </button>
-                  )}
-                </div>
-              </div>
+            {/* 地图加载指示器 */}
+            <MapLoadingIndicator
+              isLoading={isInitializing}
+              isError={!!mapError}
+              onRetry={retryMapInitialization}
+              message={mapError || '正在初始化地图...'}
+            />
+            
+            {/* 坐标显示 */}
+            {showCoordinates && isMapLoaded && mapRef.current && (
+              <CoordinateDisplay map={mapRef.current} />
             )}
+            
+            {/* 图例控制 */}
+            {isMapLoaded && (
+              <MapLegend
+                layers={layers}
+                onLayerToggle={handleLayerToggle}
+              />
+            )}
+            
             {isMounted && (
               <div 
                 ref={mapContainerRef}
@@ -807,6 +927,14 @@ export default function S100ServiceMap({
           </div>
         </CardContent>
       </Card>
+      
+      {/* 服务详情弹窗 */}
+      <ServiceDetailModal
+        service={selectedService}
+        isOpen={isServiceModalOpen}
+        onClose={() => setIsServiceModalOpen(false)}
+        onPreviewOnMap={handlePreviewOnMap}
+      />
     </div>
   )
 }

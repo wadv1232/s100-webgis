@@ -36,6 +36,7 @@ import {
   TestTube
 } from 'lucide-react'
 import S100ServiceMap from '@/components/S100ServiceMap'
+import ServiceDetailModal from '@/components/ui/ServiceDetailModal'
 import { mapServiceNodes, mockS100Services } from '@/mock-data'
 
 export default function MapServicesPage() {
@@ -71,6 +72,10 @@ export default function MapServicesPage() {
     message: '',
     loading: false
   })
+  
+  // 新增状态：服务详情弹窗
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  const [currentService, setCurrentService] = useState<any>(null)
 
   // Handle node updates for editing
   const handleNodeUpdate = (nodeId: string, updates: any) => {
@@ -78,6 +83,22 @@ export default function MapServicesPage() {
     // In a real application, this would call an API to update the node
     // For now, we'll just update the local state
     setSelectedNode(prev => prev?.id === nodeId ? { ...prev, ...updates } : prev)
+  }
+
+  // 处理服务详情查看
+  const handleServiceDetailClick = (service: any) => {
+    setCurrentService(service)
+    setIsServiceModalOpen(true)
+  }
+
+  // 处理在地图上预览服务
+  const handlePreviewOnMap = (service: any) => {
+    // 这里可以调用地图组件的预览功能
+    console.log('Preview service on map:', service)
+    // 关闭弹窗
+    setIsServiceModalOpen(false)
+    // 切换到地图标签页
+    setActiveTab('map-services')
   }
 
   // Load base map configuration for the selected node
@@ -465,7 +486,7 @@ export default function MapServicesPage() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1"
-                      onClick={() => setSelectedService(service)}
+                      onClick={() => handleServiceDetailClick(service)}
                     >
                       查看详情
                     </Button>
@@ -473,6 +494,7 @@ export default function MapServicesPage() {
                       variant="default" 
                       size="sm" 
                       className="flex-1"
+                      onClick={() => handleServiceDetailClick(service)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       预览
@@ -1026,6 +1048,14 @@ export default function MapServicesPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* 服务详情弹窗 */}
+      <ServiceDetailModal
+        service={currentService}
+        isOpen={isServiceModalOpen}
+        onClose={() => setIsServiceModalOpen(false)}
+        onPreviewOnMap={handlePreviewOnMap}
+      />
     </div>
   )
 }
