@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -28,6 +28,7 @@ import {
   Download,
   Upload
 } from 'lucide-react'
+import SharedMap, { SharedMapRef } from '@/components/maps/SharedMap'
 
 interface Node {
   id: string
@@ -86,6 +87,9 @@ const NodeManagement = () => {
       coordinates: [[[120.0, 31.0], [122.0, 31.0], [122.0, 32.0], [120.0, 32.0], [120.0, 31.0]]]
     }
   })
+  
+  // 地图组件引用
+  const mapRef = useRef<SharedMapRef>(null)
 
   const productOptions = [
     { value: 'S101', label: 'S-101 电子海图' },
@@ -180,6 +184,81 @@ const NodeManagement = () => {
     }
   }
 
+  // 处理地图几何更新
+  const handleGeometryUpdate = (nodeId: string, geometry: any) => {
+    // 将几何数据转换为GeoJSON字符串
+    const geojsonString = JSON.stringify(geometry)
+    setEditingCoverage(geojsonString)
+    
+    // 直接调用更新API
+    handleUpdateCoverageFromGeometry(nodeId, geometry)
+  }
+
+  const handleUpdateCoverageFromGeometry = async (nodeId: string, geometry: any) => {
+    try {
+      const response = await fetch(`/api/admin/nodes/${nodeId}/coverage`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coverage: geometry })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        // 更新本地状态
+        setSelectedNode(prev => prev ? {
+          ...prev,
+          coverage: result.node.coverage,
+          updatedAt: result.node.updatedAt
+        } : null)
+        fetchNodes()
+      } else {
+        const error = await response.json()
+        alert(`更新失败: ${error.error.message}`)
+      }
+    } catch (error) {
+      console.error('Error updating coverage from geometry:', error)
+      alert('更新覆盖范围失败')
+    }
+  }
+
+  // 转换节点数据为SharedMap格式
+  const convertNodesToMapFormat = (nodes: Node[]) => {
+    return nodes.map(node => ({
+      id: node.id,
+      name: node.name,
+      type: node.type as any,
+      level: node.level,
+      description: node.description || '',
+      healthStatus: node.healthStatus as any,
+      services: node.capabilities?.map(cap => cap.productType) || [],
+      location: {
+        // 如果有覆盖范围，计算中心点，否则使用默认位置
+        lat: node.coverage ? calculateCenterFromGeoJSON(node.coverage)?.lat || 31.2000 : 31.2000,
+        lng: node.coverage ? calculateCenterFromGeoJSON(node.coverage)?.lng || 121.5000 : 121.5000
+      },
+      coverage: node.coverage
+    }))
+  }
+
+  // 从GeoJSON计算中心点
+  const calculateCenterFromGeoJSON = (geojsonString: string) => {
+    try {
+      const geojson = JSON.parse(geojsonString)
+      if (geojson.type === 'Polygon' && geojson.coordinates && geojson.coordinates[0]) {
+        const coords = geojson.coordinates[0]
+        const sumLat = coords.reduce((sum: number, coord: number[]) => sum + coord[1], 0)
+        const sumLng = coords.reduce((sum: number, coord: number[]) => sum + coord[0], 0)
+        return {
+          lat: sumLat / coords.length,
+          lng: sumLng / coords.length
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating center from GeoJSON:', error)
+    }
+    return null
+  }
+
   const getHealthBadge = (status: string) => {
     switch (status) {
       case 'HEALTHY':
@@ -206,35 +285,6 @@ const NodeManagement = () => {
       default:
         return <Badge variant="outline">未知</Badge>
     }
-  }
-
-  const MapVisualization = ({ coverage, className = "" }: { coverage?: any; className?: string }) => {
-    if (!coverage) {
-      return (
-        <div className={`bg-gray-100 rounded-lg flex items-center justify-center h-64 ${className}`}>
-          <div className="text-center text-gray-500">
-            <MapPin className="h-12 w-12 mx-auto mb-2" />
-            <p>暂无覆盖范围数据</p>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className={`bg-blue-50 rounded-lg relative overflow-hidden h-64 ${className}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200">
-          {/* 简化的地图可视化 */}
-          <div className="absolute inset-4 border-2 border-blue-400 rounded-lg">
-            <div className="absolute top-2 left-2 text-xs text-blue-600 font-medium">
-              覆盖范围预览
-            </div>
-            <div className="absolute bottom-2 right-2 text-xs text-blue-600">
-              {coverage.type}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -540,7 +590,34 @@ const NodeManagement = () => {
                     <CardTitle>覆盖范围</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <MapVisualization coverage={selectedNode.coverage} />
+                    <SharedMap
+                      ref={mapRef}
+                      nodes={convertNodesToMapFormat([selectedNode])}
+                      selectedNode={convertNodesToMapFormat([selectedNode])[0]}
+                      onNodeSelect={(node) => {
+                        // 找到原始节点并选中
+                        const originalNode = nodes.find(n => n.id === node.id)
+                        if (originalNode) setSelectedNode(originalNode)
+                      }}
+                      mode="edit"
+                      editable={true}
+                      height="400px"
+                      onGeometryUpdate={handleGeometryUpdate}
+                      baseMapConfig={{
+                        type: 'osm',
+                        minZoom: 1,
+                        maxZoom: 18
+                      }}
+                      displayConfig={{
+                        showCoordinates: true,
+                        showLayerPanel: true,
+                        showLegendPanel: true,
+                        layerPanelPosition: 'top-right',
+                        coordinatePanelPosition: 'bottom-left',
+                        panelOpacity: 95,
+                        alwaysOnTop: true
+                      }}
+                    />
                     <div className="mt-4 flex justify-between items-center">
                       <div className="text-sm text-muted-foreground">
                         {selectedNode.coverage ? '已配置覆盖范围' : '未配置覆盖范围'}
@@ -554,7 +631,7 @@ const NodeManagement = () => {
                         }}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        编辑
+                        编辑GeoJSON
                       </Button>
                     </div>
                   </CardContent>
@@ -570,7 +647,33 @@ const NodeManagement = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <MapVisualization coverage={selectedNode.coverage} className="h-96" />
+                    <SharedMap
+                      nodes={convertNodesToMapFormat([selectedNode])}
+                      selectedNode={convertNodesToMapFormat([selectedNode])[0]}
+                      onNodeSelect={(node) => {
+                        // 找到原始节点并选中
+                        const originalNode = nodes.find(n => n.id === node.id)
+                        if (originalNode) setSelectedNode(originalNode)
+                      }}
+                      mode="edit"
+                      editable={true}
+                      height="500px"
+                      onGeometryUpdate={handleGeometryUpdate}
+                      baseMapConfig={{
+                        type: 'osm',
+                        minZoom: 1,
+                        maxZoom: 18
+                      }}
+                      displayConfig={{
+                        showCoordinates: true,
+                        showLayerPanel: true,
+                        showLegendPanel: true,
+                        layerPanelPosition: 'top-right',
+                        coordinatePanelPosition: 'bottom-left',
+                        panelOpacity: 95,
+                        alwaysOnTop: true
+                      }}
+                    />
                     <div className="mt-4 space-y-4">
                       <div>
                         <Label className="text-sm font-medium">GeoJSON数据</Label>

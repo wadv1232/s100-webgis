@@ -35,7 +35,7 @@ import {
   Info,
   TestTube
 } from 'lucide-react'
-import S100ServiceMap from '@/components/S100ServiceMap'
+import S100ServiceMap from '@/components/maps/SharedMap'
 import ServiceDetailModal from '@/components/ui/ServiceDetailModal'
 import { mapServiceNodes, mockS100Services } from '@/mock-data'
 
@@ -103,12 +103,18 @@ export default function MapServicesPage() {
 
   // 处理在地图上预览服务
   const handlePreviewOnMap = (service: any) => {
-    // 这里可以调用地图组件的预览功能
     console.log('Preview service on map:', service)
     // 关闭弹窗
     setIsServiceModalOpen(false)
     // 切换到地图标签页
     setActiveTab('map-services')
+    
+    // 延迟执行预览，确保地图组件已经渲染
+    setTimeout(() => {
+      // 通过自定义事件通知地图组件进行预览
+      const event = new CustomEvent('previewService', { detail: service })
+      window.dispatchEvent(event)
+    }, 300)
   }
 
   // Load base map configuration for the selected node
@@ -368,7 +374,8 @@ export default function MapServicesPage() {
         selectedNode={selectedNode}
         onNodeSelect={(node) => setSelectedNode(node)}
         onNodeUpdate={handleNodeUpdate}
-        editable={true}
+        editable={false}
+        mode="view"
         baseMapConfig={serviceConfig.baseMap}
         displayConfig={serviceConfig.display}
       />
