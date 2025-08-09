@@ -17,9 +17,19 @@ interface MapLegendProps {
   layers: LegendItem[]
   onLayerToggle: (layerId: string, visible: boolean) => void
   className?: string
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+  opacity?: number
+  zIndex?: number
 }
 
-export default function MapLegend({ layers, onLayerToggle, className = "" }: MapLegendProps) {
+export default function MapLegend({ 
+  layers, 
+  onLayerToggle, 
+  className = "",
+  position = 'top-right',
+  opacity = 95,
+  zIndex = 10
+}: MapLegendProps) {
   const [expanded, setExpanded] = useState(true)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     base: true,
@@ -60,8 +70,23 @@ export default function MapLegend({ layers, onLayerToggle, className = "" }: Map
     overlay: '📊'
   }
 
+  // 根据位置配置获取对应的CSS类
+  const getPositionClasses = (position: string) => {
+    switch (position) {
+      case 'top-right':
+        return 'top-4 right-4'
+      case 'top-left':
+        return 'top-4 left-4'
+      case 'bottom-right':
+        return 'bottom-4 right-4'
+      case 'bottom-left':
+      default:
+        return 'bottom-4 left-4'
+    }
+  }
+
   return (
-    <div className={`absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg z-10 ${className}`}>
+    <div className={`absolute ${getPositionClasses(position)} bg-white/${opacity} backdrop-blur-sm rounded-lg shadow-lg z-[${zIndex}] ${className}`}>
       <div className="p-3">
         <button
           onClick={() => setExpanded(!expanded)}

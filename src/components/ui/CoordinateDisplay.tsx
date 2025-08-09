@@ -6,6 +6,9 @@ import { MapPin, Move } from 'lucide-react'
 interface CoordinateDisplayProps {
   map: any
   className?: string
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+  opacity?: number
+  zIndex?: number
 }
 
 interface BoundingBox {
@@ -15,7 +18,13 @@ interface BoundingBox {
   west: number
 }
 
-export default function CoordinateDisplay({ map, className = "" }: CoordinateDisplayProps) {
+export default function CoordinateDisplay({ 
+  map, 
+  className = "", 
+  position = 'bottom-left',
+  opacity = 95,
+  zIndex = 10
+}: CoordinateDisplayProps) {
   const [cursorPosition, setCursorPosition] = useState<{ lat: number; lng: number } | null>(null)
   const [boundingBox, setBoundingBox] = useState<BoundingBox | null>(null)
 
@@ -65,12 +74,27 @@ export default function CoordinateDisplay({ map, className = "" }: CoordinateDis
     }
   }, [map])
 
+  // 根据位置配置获取对应的CSS类
+  const getPositionClasses = (position: string) => {
+    switch (position) {
+      case 'top-right':
+        return 'top-4 right-4'
+      case 'top-left':
+        return 'top-4 left-4'
+      case 'bottom-right':
+        return 'bottom-4 right-4'
+      case 'bottom-left':
+      default:
+        return 'bottom-4 left-4'
+    }
+  }
+
   if (!cursorPosition && !boundingBox) {
     return null
   }
 
   return (
-    <div className={`absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 space-y-2 z-10 ${className}`}>
+    <div className={`absolute ${getPositionClasses(position)} bg-white/${opacity} backdrop-blur-sm rounded-lg shadow-lg p-3 space-y-2 z-[${zIndex}] ${className}`}>
       {/* 光标坐标 */}
       {cursorPosition && (
         <div className="flex items-center space-x-2 text-sm">

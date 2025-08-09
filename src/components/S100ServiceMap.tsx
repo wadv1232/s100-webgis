@@ -100,6 +100,15 @@ interface S100ServiceMapProps {
     minZoom?: number
     maxZoom?: number
   }
+  displayConfig?: {
+    showCoordinates: boolean
+    showLayerPanel: boolean
+    showLegendPanel: boolean
+    layerPanelPosition: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+    coordinatePanelPosition: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+    panelOpacity: number
+    alwaysOnTop: boolean
+  }
 }
 
 export default function S100ServiceMap({ 
@@ -110,14 +119,13 @@ export default function S100ServiceMap({
   onNodeUpdate,
   editable = false,
   height = '600px',
-  baseMapConfig
+  baseMapConfig,
+  displayConfig
 }: S100ServiceMapProps) {
   const [mapCenter, setMapCenter] = useState([31.2000, 121.5000])
   const [mapZoom, setMapZoom] = useState(6)
   const [baseLayer, setBaseLayer] = useState(baseMapConfig?.type || 'osm')
   const [fullscreen, setFullscreen] = useState(false)
-  const [showLayerPanel, setShowLayerPanel] = useState(false)
-  const [showLegend, setShowLegend] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [editingNode, setEditingNode] = useState<NodeType | null>(null)
   const [editMode, setEditMode] = useState<'manual' | 'point' | 'bbox' | 'preset'>('manual')
@@ -137,10 +145,10 @@ export default function S100ServiceMap({
   const [mapError, setMapError] = useState<string | null>(null)
   
   // 新增状态：坐标显示
-  const [showCoordinates, setShowCoordinates] = useState(true)
+  const [showCoordinates, setShowCoordinates] = useState(displayConfig?.showCoordinates ?? true)
   
   // 新增状态：图层管理
-  const [layers, setLayers] = useState([
+  const [mapLayers, setMapLayers] = useState([
     { id: 'base', name: '基础地图', type: 'base', visible: true, icon: '🗺️' },
     { id: 'nodes', name: '节点标记', type: 'node', visible: true, color: '#3b82f6', icon: '📍' },
     { id: 'services', name: '服务区域', type: 'service', visible: true, color: '#10b981', icon: '🔧' },
@@ -150,6 +158,10 @@ export default function S100ServiceMap({
   // 新增状态：服务详情
   const [selectedService, setSelectedService] = useState<any>(null)
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  
+  // 根据配置设置面板显示状态
+  const [showLayerPanel, setShowLayerPanel] = useState(displayConfig?.showLayerPanel ?? true)
+  const [showLegend, setShowLegend] = useState(displayConfig?.showLegendPanel ?? true)
   
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
@@ -288,7 +300,7 @@ export default function S100ServiceMap({
 
   // 图层切换处理
   const handleLayerToggle = (layerId: string, visible: boolean) => {
-    setLayers(prev => prev.map(layer => 
+    setMapLayers(prev => prev.map(layer => 
       layer.id === layerId ? { ...layer, visible } : layer
     ))
     
@@ -351,7 +363,13 @@ export default function S100ServiceMap({
   useEffect(() => {
     setIsMounted(true)
     
+    // 延迟初始化地图，确保容器已渲染
+    const timer = setTimeout(() => {
+      initializeMap()
+    }, 100)
+    
     return () => {
+      clearTimeout(timer)
       // 清理地图
       cleanupMap()
     }
@@ -509,20 +527,11 @@ export default function S100ServiceMap({
     }, 100)
   }, [fullscreen, height, editingNode, baseLayer])
 
-  // Initialize map layers
-  const [mapLayers, setMapLayers] = useState<MapLayer[]>([
-    { id: 'osm', name: '标准地图', type: 'base', visible: true, opacity: 1, color: '#gray' },
-    { id: 'satellite', name: '卫星地图', type: 'base', visible: false, opacity: 1, color: '#gray' },
-    { id: 'terrain', name: '地形地图', type: 'base', visible: false, opacity: 1, color: '#gray' },
-    { id: 'nodes', name: '节点标记', type: 'service', visible: true, opacity: 1, color: '#3b82f6' },
-    { id: 'services', name: '服务覆盖', type: 'service', visible: true, opacity: 0.3, color: '#10b981' }
-  ])
-
   const serviceLayers = services.filter(service => 
     selectedNode.services.some(ns => ns.includes(service.product))
   )
 
-  // Layer control functions
+  // Layer control functions - 保持向后兼容
   const toggleLayer = (layerId: string) => {
     setMapLayers(prev => prev.map(layer => 
       layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
@@ -895,33 +904,22 @@ export default function S100ServiceMap({
             
             {/* 坐标显示 */}
             {showCoordinates && isMapLoaded && mapRef.current && (
-              <CoordinateDisplay map={mapRef.current} />
-            )}
-            
-            {/* 图例控制 */}
-            {isMapLoaded && (
-              <MapLegend
-                layers={layers}
-                onLayerToggle={handleLayerToggle}
+              <CoordinateDisplay 
+                map={mapRef.current} 
+                position={displayConfig?.coordinatePanelPosition || 'bottom-left'}
+                opacity={displayConfig?.panelOpacity || 95}
+                zIndex={displayConfig?.alwaysOnTop ? 1000 : 10}
               />
             )}
             
-            {isMounted && (
-              <div 
-                ref={mapContainerRef}
-                style={{ 
-                  height: '100%', 
-                  width: '100%',
-                  display: 'block',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 0,
-                  background: 'transparent'
-                }}
-                className="leaflet-map-container"
+            {/* 图例控制 */}
+            {isMapLoaded && showLayerPanel && (
+              <MapLegend
+                layers={mapLayers}
+                onLayerToggle={handleLayerToggle}
+                position={displayConfig?.layerPanelPosition || 'top-right'}
+                opacity={displayConfig?.panelOpacity || 95}
+                zIndex={displayConfig?.alwaysOnTop ? 1000 : 10}
               />
             )}
           </div>

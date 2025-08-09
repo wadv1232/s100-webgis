@@ -52,6 +52,16 @@ export default function MapServicesPage() {
     showLayers: true,
     showLegend: true,
     defaultFormat: 'image/png',
+    // 图层和显示配置
+    display: {
+      showCoordinates: true,
+      showLayerPanel: true,
+      showLegendPanel: true,
+      layerPanelPosition: 'top-right', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
+      coordinatePanelPosition: 'bottom-left', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
+      panelOpacity: 95, // 0-100
+      alwaysOnTop: true // 图层和坐标面板始终在最上层
+    },
     // 底图配置
     baseMap: {
       type: 'osm', // 'osm', 'satellite', 'terrain', 'custom'
@@ -360,6 +370,7 @@ export default function MapServicesPage() {
         onNodeUpdate={handleNodeUpdate}
         editable={true}
         baseMapConfig={serviceConfig.baseMap}
+        displayConfig={serviceConfig.display}
       />
 
       {/* Node Selection */}
@@ -711,6 +722,155 @@ export default function MapServicesPage() {
                     <SelectItem value="application/gml+xml">GML</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              {/* 图层和显示配置 */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-4">图层和显示配置</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="show-coordinates">显示坐标</Label>
+                        <p className="text-sm text-gray-500">在地图上显示光标坐标和图面范围</p>
+                      </div>
+                      <Switch
+                        id="show-coordinates"
+                        checked={serviceConfig.display.showCoordinates}
+                        onCheckedChange={(checked) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, showCoordinates: checked }
+                          }))
+                        }
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="show-layer-panel">显示图层面板</Label>
+                        <p className="text-sm text-gray-500">在地图上显示图层控制面板</p>
+                      </div>
+                      <Switch
+                        id="show-layer-panel"
+                        checked={serviceConfig.display.showLayerPanel}
+                        onCheckedChange={(checked) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, showLayerPanel: checked }
+                          }))
+                        }
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="show-legend-panel">显示图例面板</Label>
+                        <p className="text-sm text-gray-500">在地图上显示图例信息面板</p>
+                      </div>
+                      <Switch
+                        id="show-legend-panel"
+                        checked={serviceConfig.display.showLegendPanel}
+                        onCheckedChange={(checked) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, showLegendPanel: checked }
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="always-on-top">始终在最上层</Label>
+                        <p className="text-sm text-gray-500">图层和坐标面板始终显示在最上层</p>
+                      </div>
+                      <Switch
+                        id="always-on-top"
+                        checked={serviceConfig.display.alwaysOnTop}
+                        onCheckedChange={(checked) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, alwaysOnTop: checked }
+                          }))
+                        }
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="panel-opacity">面板透明度</Label>
+                      <Select 
+                        value={serviceConfig.display.panelOpacity.toString()} 
+                        onValueChange={(value) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, panelOpacity: parseInt(value) }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="100">100% (不透明)</SelectItem>
+                          <SelectItem value="95">95%</SelectItem>
+                          <SelectItem value="90">90%</SelectItem>
+                          <SelectItem value="85">85%</SelectItem>
+                          <SelectItem value="80">80%</SelectItem>
+                          <SelectItem value="75">75%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="layer-panel-position">图层面板位置</Label>
+                      <Select 
+                        value={serviceConfig.display.layerPanelPosition} 
+                        onValueChange={(value) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, layerPanelPosition: value }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="top-right">右上角</SelectItem>
+                          <SelectItem value="top-left">左上角</SelectItem>
+                          <SelectItem value="bottom-right">右下角</SelectItem>
+                          <SelectItem value="bottom-left">左下角</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="coordinate-panel-position">坐标面板位置</Label>
+                      <Select 
+                        value={serviceConfig.display.coordinatePanelPosition} 
+                        onValueChange={(value) => 
+                          setServiceConfig(prev => ({ 
+                            ...prev, 
+                            display: { ...prev.display, coordinatePanelPosition: value }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="top-right">右上角</SelectItem>
+                          <SelectItem value="top-left">左上角</SelectItem>
+                          <SelectItem value="bottom-right">右下角</SelectItem>
+                          <SelectItem value="bottom-left">左下角</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* 底图配置 */}
