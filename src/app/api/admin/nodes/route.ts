@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ApiErrorHandler, withApiHandler } from '@/lib/api-error'
+import { getAppConfig } from '@/config/app'
+import { getServiceConfig } from '@/config/services'
 
 interface CreateNodeRequest {
   node_id: string
@@ -130,7 +132,8 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
       })
     }
 
-    const validProducts = ['S101', 'S102', 'S104', 'S111', 'S124', 'S131']
+    const serviceConfig = getServiceConfig()
+    const validProducts = serviceConfig.validProducts
     const invalidProducts = body.required_products.filter(p => !validProducts.includes(p))
     if (invalidProducts.length > 0) {
       return ApiErrorHandler.createErrorResponse('INVALID_NODE_CONFIG', {
@@ -168,6 +171,9 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
   const apiKey = generateApiKey()
 
   try {
+    // 获取应用配置
+    const appConfig = getAppConfig()
+    
     // 创建新节点
     const newNode = await db.node.create({
       data: {
@@ -175,12 +181,12 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
         code: body.node_id, // 使用节点ID作为code
         name: body.node_name,
         description: body.description || `${body.node_name} service node`,
-        type: 'LEAF', // 默认创建叶子节点
-        level: body.level || 3, // 默认叶子节点级别
-        apiUrl: `https://api.example.com/${body.node_id}`, // 生成默认API URL
+        type: appConfig.nodes.defaultType, // 从配置中获取默认类型
+        level: body.level || appConfig.nodes.defaultLevel, // 从配置中获取默认级别
+        apiUrl: appConfig.nodes.apiUrlTemplate.replace('{nodeId}', body.node_id), // 从配置中生成API URL
         coverage: JSON.stringify(body.initial_coverage),
         isActive: true,
-        healthStatus: 'OFFLINE',
+        healthStatus: appConfig.nodes.defaultStatus, // 从配置中获取默认状态
         parentId: body.parent_id,
         // 可以添加其他必要字段
       }

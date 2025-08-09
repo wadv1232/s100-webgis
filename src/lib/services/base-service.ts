@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getServiceConfig, renderServiceTemplate } from '@/config/services'
+import { getAppConfig } from '@/config/app'
 
 // 服务配置接口
 export interface IServiceConfig {
@@ -227,49 +229,30 @@ export abstract class BaseService implements IService {
 
   // 生成基础能力文档
   protected generateCapabilitiesDoc(baseUrl: string, capability: IServiceCapability): string {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<Service xmlns="http://www.opengis.net/sos/2.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd">
-  <ows:Identification>
-    <ows:Title>${this.config.serviceName}</ows:Title>
-    <ows:Abstract>${this.config.serviceDescription}</ows:Abstract>
-    <ows:ServiceType>${capability.type}</ows:ServiceType>
-    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
-  </ows:Identification>
-  <ows:ServiceProvider>
-    <ows:ProviderName>S-100 Maritime Services</ows:ProviderName>
-    <ows:ProviderSite>${baseUrl}</ows:ProviderSite>
-    <ows:ServiceContact>
-      <ows:IndividualName>System Administrator</ows:IndividualName>
-      <ows:PositionName>Service Manager</ows:PositionName>
-      <ows:ContactInfo>
-        <ows:Phone>
-          <ows:Voice>+86-21-12345678</ows:Voice>
-        </ows:Phone>
-        <ows:Address>
-          <ows:City>Shanghai</ows:City>
-          <ows:Country>China</ows:Country>
-          <ows:ElectronicMailAddress>admin@s100-services.org</ows:ElectronicMailAddress>
-        </ows:Address>
-      </ows:ContactInfo>
-    </ows:ServiceContact>
-  </ows:ServiceProvider>
-  <ows:OperationsMetadata>
-    <ows:Operation name="GetCapabilities">
-      <ows:DCP>
-        <ows:HTTP>
-          <ows:Get xlink:href="${baseUrl}${capability.endpoint}"/>
-          <ows:Post xlink:href="${baseUrl}${capability.endpoint}"/>
-        </ows:HTTP>
-      </ows:DCP>
-    </ows:Operation>
-  </ows:OperationsMetadata>
-  <Contents>
-    <Layer>
-      <ows:Title>${this.config.serviceName}</ows:Title>
-      <ows:Abstract>${this.config.serviceDescription}</ows:Abstract>
-    </Layer>
-  </Contents>
-</Service>`
+    const appConfig = getAppConfig()
+    const serviceConfig = getServiceConfig()
+    
+    // 获取默认提供者配置
+    const providerConfig = serviceConfig.providers.default
+    
+    // 准备模板数据
+    const templateData = {
+      serviceName: this.config.serviceName,
+      serviceDescription: this.config.serviceDescription,
+      serviceType: capability.type,
+      providerName: providerConfig.name,
+      providerSite: providerConfig.baseUrl,
+      contactName: 'System Administrator',
+      contactPosition: 'Service Manager',
+      contactPhone: providerConfig.contact.phone,
+      contactCity: providerConfig.contact.address.split(',')[0],
+      contactCountry: providerConfig.contact.address.split(',').slice(-1)[0].trim(),
+      contactEmail: providerConfig.contact.email,
+      baseUrl: baseUrl,
+      endpoint: capability.endpoint
+    }
+    
+    return renderServiceTemplate('capabilities', templateData)
   }
 
   // 成功响应
@@ -326,6 +309,7 @@ export abstract class BaseService implements IService {
   protected async getDatasets(where: any, serviceType: string): Promise<any[]> {
     try {
       const { db } = await import('@/lib/db')
+      const serviceConfig = getServiceConfig()
       
       // 构建查询条件
       const queryWhere: any = {
@@ -333,14 +317,8 @@ export abstract class BaseService implements IService {
       }
       
       // 根据服务类型过滤产品类型
-      if (this.config.serviceCode === 'S101') {
-        queryWhere.productType = 'S101'
-      } else if (this.config.serviceCode === 'S102') {
-        queryWhere.productType = 'S102'
-      } else if (this.config.serviceCode === 'S104') {
-        queryWhere.productType = 'S104'
-      } else if (this.config.serviceCode === 'S111') {
-        queryWhere.productType = 'S111'
+      if (this.config.serviceCode && serviceConfig.isValidProductType(this.config.serviceCode)) {
+        queryWhere.productType = this.config.serviceCode
       }
       
       // 合并额外的查询条件

@@ -3,6 +3,8 @@
  * 支持多种底图配置，包括OpenStreetMap、天地图、高德地图等
  */
 
+import { getAppConfig } from './app'
+
 export interface MapTileLayer {
   id: string
   name: string
@@ -315,6 +317,22 @@ export function getCompleteMapConfig(
   }
 }
 
+// 根据应用配置获取地图配置
+export function getAppMapConfig(): MapConfig {
+  const appConfig = getAppConfig()
+  
+  // 使用应用配置中的地理设置
+  const mapConfig: MapConfig = {
+    ...defaultMapConfig,
+    center: appConfig.geo.defaultCenter,
+    zoom: appConfig.geo.defaultZoom,
+    minZoom: appConfig.geo.minZoom,
+    maxZoom: appConfig.geo.maxZoom
+  }
+  
+  return mapConfig
+}
+
 // 根据类型获取图层
 export function getLayersByType(config: MapConfig, type: MapTileLayer['type']): MapTileLayer[] {
   return config.layers.filter(layer => layer.type === type)
@@ -361,3 +379,11 @@ export function validateLayerConfig(layer: MapTileLayer): { valid: boolean; erro
     errors
   }
 }
+
+// 获取默认地图配置
+export function getDefaultMapConfig(): MapConfig {
+  return defaultMapConfig
+}
+
+// 导出默认配置
+export default getAppMapConfig
