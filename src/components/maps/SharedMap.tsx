@@ -351,6 +351,21 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
       console.log('Map initialized successfully')
       setIsMapLoaded(true)
       
+      // 延迟重绘地图，确保容器尺寸正确
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize()
+          console.log('Map size invalidated')
+          
+          // 如果有节点数据，调整地图视图到第一个节点的位置
+          if (nodes.length > 0 && nodes[0].location) {
+            const node = nodes[0]
+            mapRef.current.setView([node.location.lat, node.location.lng], 10)
+            console.log('Map view set to node location:', node.location)
+          }
+        }
+      }, 300)
+      
     } catch (error) {
       console.error('Error initializing map:', error)
       console.error('Error details:', error instanceof Error ? error.message : error)
@@ -539,7 +554,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     // 延迟初始化地图，确保容器已渲染
     const timer = setTimeout(() => {
       initializeMap()
-    }, 100)
+    }, 200)
     
     return () => {
       clearTimeout(timer)
@@ -547,6 +562,32 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
       cleanupMap()
     }
   }, [])
+
+  // 监听容器尺寸变化
+  useEffect(() => {
+    if (!mapContainerRef.current || !mapRef.current) return
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (width > 0 && height > 0 && mapRef.current) {
+          // 延迟重绘地图，确保DOM更新完成
+          setTimeout(() => {
+            mapRef.current.invalidateSize()
+          }, 100)
+        }
+      }
+    })
+    
+    resizeObserver.observe(mapContainerRef.current)
+    resizeObserverRef.current = resizeObserver
+    
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect()
+      }
+    }
+  }, [isMapLoaded])
 
   // 清理地图函数
   const cleanupMap = () => {
@@ -627,11 +668,16 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
   const addNodeMarkers = (map: any) => {
     if (!L) return
     
+    console.log('Adding node markers, nodes:', nodes)
+    console.log('Node markers visible:', mapLayers.find(l => l.id === 'nodes')?.visible)
+    
     if (!mapLayers.find(l => l.id === 'nodes')?.visible) {
+      console.log('Node markers layer is not visible')
       return
     }
     
     nodes.forEach((node) => {
+      console.log('Adding marker for node:', node.name, 'location:', node.location)
       const isSelected = editingNode?.id === node.id
       const color = getNodeColor(node.healthStatus)
       
@@ -919,9 +965,10 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
               minHeight: fullscreen ? '100vh' : (parseInt(height) || 600),
               display: 'block',
               overflow: 'hidden',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              zIndex: 1
             }}
-            className="map-container"
+            className="map-container rounded-b-lg"
           >
             {/* 地图加载指示器 */}
             <MapLoadingIndicator
@@ -942,7 +989,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
             )}
             
             {/* 图例控制 */}
-            {isMapLoaded && displayConfig?.showLayerPanel && (
+            {isMapLoaded && displayConfig?.showLegendPanel && (
               <MapLegend
                 layers={mapLayers}
                 onLayerToggle={handleLayerToggle}

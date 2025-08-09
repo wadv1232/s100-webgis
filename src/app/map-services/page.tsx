@@ -55,8 +55,8 @@ export default function MapServicesPage() {
     // 图层和显示配置
     display: {
       showCoordinates: true,
-      showLayerPanel: true,
-      showLegendPanel: true,
+      showLayerPanel: false,
+      showLegendPanel: false,
       layerPanelPosition: 'top-right', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
       coordinatePanelPosition: 'bottom-left', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
       panelOpacity: 95, // 0-100
@@ -181,6 +181,7 @@ export default function MapServicesPage() {
         },
         body: JSON.stringify({
           ...serviceConfig.baseMap,
+          ...serviceConfig.display,
           isDefault: true
         }),
       })

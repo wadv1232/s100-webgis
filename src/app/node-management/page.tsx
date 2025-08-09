@@ -29,6 +29,7 @@ import {
   Upload
 } from 'lucide-react'
 import SharedMap, { SharedMapRef } from '@/components/maps/SharedMap'
+import NodeTreeView from '@/components/nodes/NodeTreeView'
 
 interface Node {
   id: string
@@ -52,6 +53,19 @@ interface Node {
   }>
   createdAt: string
   updatedAt: string
+  // NodeTreeView 组件需要的额外字段
+  code: string
+  apiUrl: string
+  adminUrl?: string
+  lastHealthCheck?: string
+  _count?: {
+    datasets: number
+    childNodeRelations: number
+  }
+  location?: {
+    lat: number
+    lng: number
+  }
 }
 
 interface CreateNodeForm {
@@ -88,8 +102,36 @@ const NodeManagement = () => {
     }
   })
   
+  // 视图模式状态
+  const [viewMode, setViewMode] = useState<'table' | 'tree'>('table')
+  
+  // 树形视图展开状态
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
+  
   // 地图组件引用
   const mapRef = useRef<SharedMapRef>(null)
+  
+  // 地图配置状态
+  const [serviceConfig, setServiceConfig] = useState({
+    // 图层和显示配置
+    display: {
+      showCoordinates: true,
+      showLayerPanel: false,
+      showLegendPanel: false,
+      layerPanelPosition: 'top-right', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
+      coordinatePanelPosition: 'bottom-left', // 'top-right', 'top-left', 'bottom-right', 'bottom-left'
+      panelOpacity: 95, // 0-100
+      alwaysOnTop: true // 图层和坐标面板始终在最上层
+    },
+    // 底图配置
+    baseMap: {
+      type: 'osm', // 'osm', 'satellite', 'terrain', 'custom'
+      customUrl: '',
+      attribution: '',
+      minZoom: 1,
+      maxZoom: 18
+    }
+  })
 
   const productOptions = [
     { value: 'S101', label: 'S-101 电子海图' },
@@ -103,6 +145,14 @@ const NodeManagement = () => {
   useEffect(() => {
     fetchNodes()
   }, [])
+
+  useEffect(() => {
+    // 当节点数据加载完成后，如果没有选中的节点，默认选择第一个节点
+    if (nodes.length > 0 && !selectedNode) {
+      console.log('Auto-selecting first node:', nodes[0])
+      setSelectedNode(nodes[0])
+    }
+  }, [nodes, selectedNode])
 
   const fetchNodes = async () => {
     setIsLoading(true)
@@ -221,9 +271,116 @@ const NodeManagement = () => {
     }
   }
 
+  // NodeTreeView 组件所需的回调函数
+  const handleNodeEdit = (node: Node) => {
+    setSelectedNode(node)
+    // 这里可以添加编辑逻辑，比如打开编辑对话框
+  }
+
+  const handleNodeDelete = async (nodeId: string) => {
+    if (confirm('确定要删除这个节点吗？')) {
+      try {
+        const response = await fetch(`/api/admin/nodes/${nodeId}`, {
+          method: 'DELETE'
+        })
+        if (response.ok) {
+          fetchNodes()
+          if (selectedNode?.id === nodeId) {
+            setSelectedNode(null)
+          }
+        } else {
+          alert('删除失败')
+        }
+      } catch (error) {
+        console.error('Error deleting node:', error)
+        alert('删除失败')
+      }
+    }
+  }
+
+  const handleHealthCheck = async (nodeId: string) => {
+    try {
+      const response = await fetch(`/api/admin/nodes/${nodeId}/health-check`, {
+        method: 'POST'
+      })
+      if (response.ok) {
+        fetchNodes()
+        alert('健康检查完成')
+      } else {
+        alert('健康检查失败')
+      }
+    } catch (error) {
+      console.error('Error performing health check:', error)
+      alert('健康检查失败')
+    }
+  }
+
+  const handleNodePublish = async (nodeId: string) => {
+    try {
+      const response = await fetch(`/api/admin/nodes/${nodeId}/publish`, {
+        method: 'POST'
+      })
+      if (response.ok) {
+        fetchNodes()
+        alert('节点发布成功')
+      } else {
+        alert('节点发布失败')
+      }
+    } catch (error) {
+      console.error('Error publishing node:', error)
+      alert('节点发布失败')
+    }
+  }
+
+  const handleNodeOffline = async (nodeId: string) => {
+    try {
+      const response = await fetch(`/api/admin/nodes/${nodeId}/offline`, {
+        method: 'POST'
+      })
+      if (response.ok) {
+        fetchNodes()
+        alert('节点已下线')
+      } else {
+        alert('节点下线失败')
+      }
+    } catch (error) {
+      console.error('Error taking node offline:', error)
+      alert('节点下线失败')
+    }
+  }
+
+  const handlePushServices = async (nodeId: string) => {
+    try {
+      const response = await fetch(`/api/admin/nodes/${nodeId}/push-services`, {
+        method: 'POST'
+      })
+      if (response.ok) {
+        alert('服务推送成功')
+      } else {
+        alert('服务推送失败')
+      }
+    } catch (error) {
+      console.error('Error pushing services:', error)
+      alert('服务推送失败')
+    }
+  }
+
+  const handleToggleExpand = (nodeId: string) => {
+    setExpandedNodes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId)
+      } else {
+        newSet.add(nodeId)
+      }
+      return newSet
+    })
+  }
+
   // 转换节点数据为SharedMap格式
   const convertNodesToMapFormat = (nodes: Node[]) => {
-    return nodes.map(node => ({
+    console.log('Converting nodes to map format:', nodes)
+    const converted = nodes.map(node => ({
       id: node.id,
       name: node.name,
       type: node.type as any,
@@ -238,6 +395,20 @@ const NodeManagement = () => {
       },
       coverage: node.coverage
     }))
+    console.log('Converted nodes:', converted)
+    return converted
+  }
+
+  // 获取用于地图的节点数据
+  const getMapNodes = () => {
+    console.log('Selected node:', selectedNode)
+    console.log('All nodes:', nodes)
+    if (!selectedNode) {
+      console.log('No selected node, returning empty array')
+      return []
+    }
+    console.log('Returning selected node for map:', [selectedNode])
+    return [selectedNode]
   }
 
   // 从GeoJSON计算中心点
@@ -267,6 +438,8 @@ const NodeManagement = () => {
         return <Badge variant="secondary">警告</Badge>
       case 'ERROR':
         return <Badge variant="destructive">错误</Badge>
+      case 'OFFLINE':
+        return <Badge variant="outline">离线</Badge>
       default:
         return <Badge variant="outline">未知</Badge>
     }
@@ -464,12 +637,30 @@ const NodeManagement = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {/* 视图切换 */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                >
+                  表格视图
+                </Button>
+                <Button
+                  variant={viewMode === 'tree' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('tree')}
+                >
+                  树形视图
+                </Button>
+              </div>
+              
               {isLoading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">加载中...</p>
                 </div>
-              ) : (
+              ) : viewMode === 'table' ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {nodes.map(node => (
                     <div
@@ -506,6 +697,21 @@ const NodeManagement = () => {
                     </div>
                   ))}
                 </div>
+              ) : (
+                <NodeTreeView
+                  nodes={nodes}
+                  loading={isLoading}
+                  selectedNode={selectedNode}
+                  expandedNodes={expandedNodes}
+                  onNodeSelect={setSelectedNode}
+                  onNodeEdit={handleNodeEdit}
+                  onNodeDelete={handleNodeDelete}
+                  onHealthCheck={handleHealthCheck}
+                  onNodePublish={handleNodePublish}
+                  onNodeOffline={handleNodeOffline}
+                  onPushServices={handlePushServices}
+                  onToggleExpand={handleToggleExpand}
+                />
               )}
             </CardContent>
           </Card>
@@ -592,8 +798,8 @@ const NodeManagement = () => {
                   <CardContent>
                     <SharedMap
                       ref={mapRef}
-                      nodes={convertNodesToMapFormat([selectedNode])}
-                      selectedNode={convertNodesToMapFormat([selectedNode])[0]}
+                      nodes={convertNodesToMapFormat(getMapNodes())}
+                      selectedNode={convertNodesToMapFormat(getMapNodes())[0]}
                       onNodeSelect={(node) => {
                         // 找到原始节点并选中
                         const originalNode = nodes.find(n => n.id === node.id)
@@ -603,20 +809,8 @@ const NodeManagement = () => {
                       editable={true}
                       height="400px"
                       onGeometryUpdate={handleGeometryUpdate}
-                      baseMapConfig={{
-                        type: 'osm',
-                        minZoom: 1,
-                        maxZoom: 18
-                      }}
-                      displayConfig={{
-                        showCoordinates: true,
-                        showLayerPanel: true,
-                        showLegendPanel: true,
-                        layerPanelPosition: 'top-right',
-                        coordinatePanelPosition: 'bottom-left',
-                        panelOpacity: 95,
-                        alwaysOnTop: true
-                      }}
+                      baseMapConfig={serviceConfig.baseMap}
+                      displayConfig={serviceConfig.display}
                     />
                     <div className="mt-4 flex justify-between items-center">
                       <div className="text-sm text-muted-foreground">
@@ -648,8 +842,8 @@ const NodeManagement = () => {
                   </CardHeader>
                   <CardContent>
                     <SharedMap
-                      nodes={convertNodesToMapFormat([selectedNode])}
-                      selectedNode={convertNodesToMapFormat([selectedNode])[0]}
+                      nodes={convertNodesToMapFormat(getMapNodes())}
+                      selectedNode={convertNodesToMapFormat(getMapNodes())[0]}
                       onNodeSelect={(node) => {
                         // 找到原始节点并选中
                         const originalNode = nodes.find(n => n.id === node.id)
@@ -659,20 +853,8 @@ const NodeManagement = () => {
                       editable={true}
                       height="500px"
                       onGeometryUpdate={handleGeometryUpdate}
-                      baseMapConfig={{
-                        type: 'osm',
-                        minZoom: 1,
-                        maxZoom: 18
-                      }}
-                      displayConfig={{
-                        showCoordinates: true,
-                        showLayerPanel: true,
-                        showLegendPanel: true,
-                        layerPanelPosition: 'top-right',
-                        coordinatePanelPosition: 'bottom-left',
-                        panelOpacity: 95,
-                        alwaysOnTop: true
-                      }}
+                      baseMapConfig={serviceConfig.baseMap}
+                      displayConfig={serviceConfig.display}
                     />
                     <div className="mt-4 space-y-4">
                       <div>

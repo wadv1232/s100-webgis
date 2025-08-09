@@ -395,6 +395,16 @@ model NodeBaseMapConfig {
   maxZoom         Int         @default(18) // 最大缩放级别
   isActive        Boolean     @default(true) // 是否启用
   isDefault       Boolean     @default(false) // 是否为节点默认配置
+  
+  // 显示配置字段
+  showCoordinates Boolean     @default(true) // 显示坐标
+  showLayerPanel  Boolean     @default(true) // 显示图层面板
+  showLegendPanel Boolean     @default(true) // 显示图例面板
+  layerPanelPosition String    @default("top-right") // 图层面板位置
+  coordinatePanelPosition String @default("bottom-left") // 坐标面板位置
+  panelOpacity    Int         @default(95) // 面板透明度 (0-100)
+  alwaysOnTop     Boolean     @default(true) // 面板始终在最上层
+  
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   updatedBy       String?     // 更新者用户ID

@@ -61,7 +61,22 @@ export async function POST(
     try {
       const { id: nodeId } = await params
       const body = await request.json()
-      const { type, customUrl, attribution, minZoom, maxZoom, isDefault } = body
+      const { 
+        type, 
+        customUrl, 
+        attribution, 
+        minZoom, 
+        maxZoom, 
+        isDefault,
+        // 显示配置字段
+        showCoordinates,
+        showLayerPanel,
+        showLegendPanel,
+        layerPanelPosition,
+        coordinatePanelPosition,
+        panelOpacity,
+        alwaysOnTop
+      } = body
 
       // 检查用户权限（系统管理员可以管理任何节点，节点管理员只能管理自己负责的节点）
       if (user.role !== 'ADMIN') {
@@ -109,6 +124,14 @@ export async function POST(
             minZoom: minZoom || 1,
             maxZoom: maxZoom || 18,
             isDefault: isDefault || false,
+            // 显示配置字段
+            showCoordinates: showCoordinates ?? true,
+            showLayerPanel: showLayerPanel ?? true,
+            showLegendPanel: showLegendPanel ?? true,
+            layerPanelPosition: layerPanelPosition || 'top-right',
+            coordinatePanelPosition: coordinatePanelPosition || 'bottom-left',
+            panelOpacity: panelOpacity || 95,
+            alwaysOnTop: alwaysOnTop ?? true,
             updatedBy: user.id
           }
         })
@@ -123,6 +146,14 @@ export async function POST(
             minZoom: minZoom || 1,
             maxZoom: maxZoom || 18,
             isDefault: isDefault || false,
+            // 显示配置字段
+            showCoordinates: showCoordinates ?? true,
+            showLayerPanel: showLayerPanel ?? true,
+            showLegendPanel: showLegendPanel ?? true,
+            layerPanelPosition: layerPanelPosition || 'top-right',
+            coordinatePanelPosition: coordinatePanelPosition || 'bottom-left',
+            panelOpacity: panelOpacity || 95,
+            alwaysOnTop: alwaysOnTop ?? true,
             updatedBy: user.id
           }
         })

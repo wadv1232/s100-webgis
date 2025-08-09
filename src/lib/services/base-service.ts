@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // 服务配置接口

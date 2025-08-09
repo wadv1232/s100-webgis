@@ -172,13 +172,15 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
     const newNode = await db.node.create({
       data: {
         id: body.node_id,
+        code: body.node_id, // 使用节点ID作为code
         name: body.node_name,
         description: body.description || `${body.node_name} service node`,
         type: 'LEAF', // 默认创建叶子节点
         level: body.level || 3, // 默认叶子节点级别
+        apiUrl: `https://api.example.com/${body.node_id}`, // 生成默认API URL
         coverage: JSON.stringify(body.initial_coverage),
         isActive: true,
-        healthStatus: 'UNKNOWN',
+        healthStatus: 'OFFLINE',
         parentId: body.parent_id,
         // 可以添加其他必要字段
       }
@@ -211,8 +213,7 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
   }
 })
 
-export { createNodeHandler as POST }
-export async function GET(request: NextRequest) {
+const getNodesHandler = withApiHandler(async (request: NextRequest): Promise<NextResponse> => {
   try {
     // 获取节点列表，支持分页和过滤
     const { searchParams } = new URL(request.url)
@@ -268,7 +269,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       nodes: nodes.map(node => ({
         ...node,
-        coverage: node.coverage ? JSON.parse(node.coverage as string) : null,
+        coverage: node.coverage ? (() => {
+          try {
+            return JSON.parse(node.coverage as string)
+          } catch (e) {
+            console.error('Error parsing coverage for node', node.id, ':', e)
+            return null
+          }
+        })() : null,
         capabilities: node.capabilities.map(cap => ({
           productType: cap.productType,
           serviceType: cap.serviceType,
@@ -282,9 +290,10 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit)
       }
     })
-
   } catch (error) {
-    console.error('Error fetching nodes:', error)
-    return ApiErrorHandler.createErrorResponse('INTERNAL_ERROR')
+    console.error('Error in getNodesHandler:', error)
+    throw error
   }
-}
+})
+
+export { createNodeHandler as POST, getNodesHandler as GET }
