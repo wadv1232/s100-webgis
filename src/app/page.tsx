@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -38,7 +38,42 @@ import {
   Terminal,
   Download
 } from 'lucide-react'
-import { homeMockNodes, s100Products, systemStatus } from '@/mock-data'
+
+// 真实数据接口
+interface SystemStatus {
+  onlineNodes: number
+  activeServices: number
+  datasets: number
+  systemHealth: string
+  totalNodes: number
+  timestamp: string
+}
+
+interface HomeNode {
+  id: string
+  code: string
+  name: string
+  type: string
+  level: number
+  description?: string
+  status: string
+  location: string
+  capabilities: string[]
+  healthScore: number
+  lastUpdated: string
+  datasetsCount: number
+  childrenCount: number
+}
+
+interface S100Product {
+  id: string
+  name: string
+  description: string
+  status: string
+  version: string
+  services: string[]
+  count: number
+}
 
 // 颜色映射函数
 const getColorClass = (color: string, type: 'text' | 'bg' | 'border' = 'text', shade: number = 600) => {
@@ -136,7 +171,58 @@ const StatusCard = ({ title, value, trend, icon: Icon, color = "green" }: {
 
 export default function Home() {
   const { user } = useAuth()
-  const [selectedNode, setSelectedNode] = useState(homeMockNodes[0])
+  const [selectedNode, setSelectedNode] = useState<HomeNode | null>(null)
+  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
+    onlineNodes: 0,
+    activeServices: 0,
+    datasets: 0,
+    systemHealth: '0%',
+    totalNodes: 0,
+    timestamp: ''
+  })
+  const [homeNodes, setHomeNodes] = useState<HomeNode[]>([])
+  const [s100Products, setS100Products] = useState<S100Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // 获取系统状态和节点数据
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // 并行获取所有数据
+        const [statusResponse, nodesResponse, productsResponse] = await Promise.all([
+          fetch('/api/system/status'),
+          fetch('/api/home/nodes'),
+          fetch('/api/home/products')
+        ])
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json()
+          setSystemStatus(statusData.data)
+        }
+
+        if (nodesResponse.ok) {
+          const nodesData = await nodesResponse.json()
+          setHomeNodes(nodesData.data)
+          if (nodesData.data.length > 0) {
+            setSelectedNode(nodesData.data[0])
+          }
+        }
+
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json()
+          setS100Products(productsData.data)
+        }
+      } catch (error) {
+        console.error('Error fetching home data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const getHealthIcon = (status: string) => {
     switch (status) {
@@ -497,28 +583,28 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatusCard
             title="在线节点"
-            value={systemStatus.onlineNodes}
+            value={isLoading ? '...' : systemStatus.onlineNodes}
             trend="up"
             icon={Server}
             color="green"
           />
           <StatusCard
             title="活跃服务"
-            value={systemStatus.activeServices}
+            value={isLoading ? '...' : systemStatus.activeServices}
             trend="up"
             icon={Activity}
             color="blue"
           />
           <StatusCard
             title="数据集"
-            value={systemStatus.datasets}
+            value={isLoading ? '...' : systemStatus.datasets}
             trend="stable"
             icon={Database}
             color="purple"
           />
           <StatusCard
             title="系统健康度"
-            value={systemStatus.systemHealth}
+            value={isLoading ? '...' : systemStatus.systemHealth}
             trend="up"
             icon={CheckCircle}
             color="green"
@@ -781,7 +867,7 @@ export default function Home() {
                   <div>
                     <h4 className="font-medium mb-3">分层架构</h4>
                     <div className="space-y-3">
-                      {homeMockNodes.slice(0, 3).map((node, index) => (
+                      {homeNodes.slice(0, 3).map((node, index) => (
                         <div key={node.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
                           <div className="flex-shrink-0">
                             {node.type === 'GLOBAL_ROOT' && <Globe className="h-6 w-6 text-blue-600" />}
@@ -793,8 +879,8 @@ export default function Home() {
                             <p className="text-sm text-gray-600">{getNodeTypeName(node.type)}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            {getHealthIcon(node.healthStatus)}
-                            {getHealthBadge(node.healthStatus)}
+                            {getHealthIcon(node.status)}
+                            {getHealthBadge(node.status)}
                           </div>
                         </div>
                       ))}
@@ -806,10 +892,10 @@ export default function Home() {
                     <h4 className="font-medium mb-3">S-100产品系列</h4>
                     <div className="grid grid-cols-2 gap-3">
                       {s100Products.slice(0, 4).map((product) => (
-                        <div key={product.code} className="p-3 bg-white rounded-lg border hover:shadow-md transition-shadow">
+                        <div key={product.id} className="p-3 bg-white rounded-lg border hover:shadow-md transition-shadow">
                           <div className="flex items-center gap-2 mb-2">
-                            <product.icon className="h-5 w-5 text-blue-600" />
-                            <span className="font-medium">{product.code}</span>
+                            <Anchor className="h-5 w-5 text-blue-600" />
+                            <span className="font-medium">{product.id}</span>
                           </div>
                           <h5 className="text-sm font-medium">{product.name}</h5>
                           <p className="text-xs text-gray-600 mt-1">{product.description}</p>

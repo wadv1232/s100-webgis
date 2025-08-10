@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { ApiErrorHandler, withApiHandler } from '@/lib/api-error'
 import { getAppConfig } from '@/config/app'
 import { getServiceConfig } from '@/config/services'
+import { NodeType, NodeHealth } from '@prisma/client'
 
 interface CreateNodeRequest {
   node_id: string
@@ -181,12 +182,12 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
         code: body.node_id, // 使用节点ID作为code
         name: body.node_name,
         description: body.description || `${body.node_name} service node`,
-        type: appConfig.nodes.defaultType, // 从配置中获取默认类型
-        level: body.level || appConfig.nodes.defaultLevel, // 从配置中获取默认级别
+        type: NodeType.LEAF, // 使用枚举类型而不是字符串
+        level: body.level || 3, // 使用数字而不是配置中的值
         apiUrl: appConfig.nodes.apiUrlTemplate.replace('{nodeId}', body.node_id), // 从配置中生成API URL
         coverage: JSON.stringify(body.initial_coverage),
         isActive: true,
-        healthStatus: appConfig.nodes.defaultStatus, // 从配置中获取默认状态
+        healthStatus: NodeHealth.OFFLINE, // 使用枚举类型而不是字符串
         parentId: body.parent_id,
         // 可以添加其他必要字段
       }
@@ -212,9 +213,17 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
 
   } catch (error) {
     console.error('Error creating node:', error)
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      meta: error.meta
+    })
     return ApiErrorHandler.createErrorResponse('INTERNAL_ERROR', {
       operation: 'create_node',
-      node_id: body.node_id
+      node_id: body.node_id,
+      error_details: error.message
     })
   }
 })
