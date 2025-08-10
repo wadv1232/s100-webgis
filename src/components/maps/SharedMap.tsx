@@ -865,57 +865,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     setLongitude('')
   }
 
-  // 开始绘制
-  const startDrawing = (mode: 'polygon' | 'rectangle' | 'marker' = 'polygon') => {
-    if (!mapRef.current || !drawControlRef.current) return
-
-    setDrawMode(mode)
-    setIsDrawing(true)
-
-    // 添加绘制控件到地图
-    drawControlRef.current.addTo(mapRef.current)
-
-    // 根据模式启用相应的绘制工具
-    setTimeout(() => {
-      if (mode === 'polygon') {
-        // 查找并点击多边形绘制按钮
-        const polygonButton = document.querySelector('.leaflet-draw-draw-polygon') as HTMLElement
-        if (polygonButton) {
-          polygonButton.click()
-        }
-      } else if (mode === 'rectangle') {
-        // 查找并点击矩形绘制按钮
-        const rectangleButton = document.querySelector('.leaflet-draw-draw-rectangle') as HTMLElement
-        if (rectangleButton) {
-          rectangleButton.click()
-        }
-      } else if (mode === 'marker') {
-        // 查找并点击标记绘制按钮
-        const markerButton = document.querySelector('.leaflet-draw-draw-marker') as HTMLElement
-        if (markerButton) {
-          markerButton.click()
-        }
-      }
-    }, 100)
-
-    console.log('Started drawing mode:', mode)
-  }
-
-  // 停止绘制
-  const stopDrawing = () => {
-    if (!mapRef.current || !drawControlRef.current) return
-
-    setIsDrawing(false)
-    
-    // 从地图移除绘制控件
-    try {
-      mapRef.current.removeControl(drawControlRef.current)
-    } catch (error) {
-      console.warn('Error removing draw control:', error)
-    }
-
-    console.log('Stopped drawing mode')
-  }
+  
 
   // 处理地图点击设置位置
   const handleMapClick = (e: any) => {
