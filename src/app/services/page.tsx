@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -43,128 +43,54 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 
-// 模拟服务数据
-const mockServices = {
-  s101: [
-    {
-      id: 's101-wms-shanghai',
-      name: 'S-101电子海图WMS服务',
-      type: 'WMS',
-      product: 'S101',
-      version: '1.3.0',
-      status: 'ACTIVE',
-      endpoint: '/api/s101/wms',
-      node: '上海港叶子节点',
-      nodeType: 'LEAF',
-      lastUpdated: '2024-01-20T10:30:00Z',
-      uptime: '99.9%',
-      requestCount: 15420,
-      avgResponseTime: 245,
-      layers: ['navigation', 'depth', 'landmark', 'restricted'],
-      formats: ['image/png', 'image/jpeg', 'application/json'],
-      description: '提供电子海图数据的Web地图服务，支持多种图层和格式'
-    },
-    {
-      id: 's101-wfs-shanghai',
-      name: 'S-101电子海图WFS服务',
-      type: 'WFS',
-      product: 'S101',
-      version: '1.1.0',
-      status: 'ACTIVE',
-      endpoint: '/api/s101/wfs',
-      node: '上海港叶子节点',
-      nodeType: 'LEAF',
-      lastUpdated: '2024-01-20T10:30:00Z',
-      uptime: '99.8%',
-      requestCount: 8320,
-      avgResponseTime: 320,
-      features: ['depth_areas', 'navigation_lines', 'anchors', 'obstructions'],
-      formats: ['application/json', 'application/gml', 'text/xml'],
-      description: '提供电子海图要素数据的Web要素服务，支持空间查询和数据提取'
-    },
-    {
-      id: 's101-wms-ningbo',
-      name: 'S-101电子海图WMS服务',
-      type: 'WMS',
-      product: 'S101',
-      version: '1.3.0',
-      status: 'WARNING',
-      endpoint: '/api/s101/wms',
-      node: '宁波港叶子节点',
-      nodeType: 'LEAF',
-      lastUpdated: '2024-01-19T15:45:00Z',
-      uptime: '98.5%',
-      requestCount: 6210,
-      avgResponseTime: 280,
-      layers: ['navigation', 'depth'],
-      formats: ['image/png', 'image/jpeg'],
-      description: '宁波港区域电子海图Web地图服务'
-    }
-  ],
-  s102: [
-    {
-      id: 's102-wcs-east-china',
-      name: 'S-102高精度水深WCS服务',
-      type: 'WCS',
-      product: 'S102',
-      version: '1.1.1',
-      status: 'ACTIVE',
-      endpoint: '/api/s102/wcs',
-      node: '东海分局区域节点',
-      nodeType: 'REGIONAL',
-      lastUpdated: '2024-01-20T09:15:00Z',
-      uptime: '99.7%',
-      requestCount: 4520,
-      avgResponseTime: 450,
-      coverages: ['bathymetry', 'uncertainty', 'quality'],
-      formats: ['image/tiff', 'application/netcdf'],
-      description: '东海区域高精度水深数据Web覆盖服务，提供栅格数据访问'
-    },
-    {
-      id: 's102-wms-east-china',
-      name: 'S-102高精度水深WMS服务',
-      type: 'WMS',
-      product: 'S102',
-      version: '1.3.0',
-      status: 'ACTIVE',
-      endpoint: '/api/s102/wms',
-      node: '东海分局区域节点',
-      nodeType: 'REGIONAL',
-      lastUpdated: '2024-01-20T09:15:00Z',
-      uptime: '99.6%',
-      requestCount: 3890,
-      avgResponseTime: 380,
-      layers: ['bathymetry', 'contour', 'soundings', 'quality'],
-      formats: ['image/png', 'image/jpeg'],
-      description: '东海区域高精度水深数据Web地图服务可视化'
-    },
-    {
-      id: 's102-wcs-shanghai',
-      name: 'S-102高精度水深WCS服务',
-      type: 'WCS',
-      product: 'S102',
-      version: '1.1.1',
-      status: 'MAINTENANCE',
-      endpoint: '/api/s102/wcs',
-      node: '上海港叶子节点',
-      nodeType: 'LEAF',
-      lastUpdated: '2024-01-18T14:20:00Z',
-      uptime: '95.2%',
-      requestCount: 2150,
-      avgResponseTime: 520,
-      coverages: ['bathymetry'],
-      formats: ['image/tiff'],
-      description: '上海港区域高精度水深数据服务（维护中）'
-    }
-  ]
+interface Service {
+  id: string
+  name: string
+  type: string
+  product: string
+  version: string
+  status: string
+  endpoint: string
+  node: string
+  nodeType: string
+  nodeId: string
+  lastUpdated: string
+  uptime: string
+  requestCount: number
+  avgResponseTime: number
+  layers: string[]
+  formats: string[]
+  description: string
+  isEnabled: boolean
+}
+
+interface ServicesData {
+  services: Service[]
+  stats: {
+    total: number
+    active: number
+    warning: number
+    error: number
+    maintenance: number
+    byProduct: Record<string, number>
+    byType: Record<string, number>
+  }
+  filters: {
+    nodeId?: string
+    productType?: string
+    serviceType?: string
+    status?: string
+  }
 }
 
 export default function ServicesManagement() {
+  const [servicesData, setServicesData] = useState<ServicesData | null>(null)
+  const [loading, setLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState('all')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showMonitorModal, setShowMonitorModal] = useState(false)
@@ -190,6 +116,34 @@ export default function ServicesManagement() {
       broadcastEnabled: false
     }
   })
+
+  // 获取服务数据
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (selectedProduct !== 'all') params.append('productType', selectedProduct)
+      if (selectedStatus !== 'all') params.append('status', selectedStatus)
+      if (selectedType !== 'all') params.append('serviceType', selectedType)
+
+      const response = await fetch(`/api/services?${params}`)
+      const result = await response.json()
+      
+      if (result.success) {
+        setServicesData(result.data)
+      } else {
+        console.error('获取服务数据失败:', result.error)
+      }
+    } catch (error) {
+      console.error('获取服务数据失败:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchServices()
+  }, [selectedProduct, selectedStatus, selectedType])
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -246,40 +200,37 @@ export default function ServicesManagement() {
   }
 
   // 过滤服务
-  const filterServices = (services: any[]) => {
+  const filterServices = (services: Service[]) => {
     return services.filter(service => {
-      const matchesProduct = selectedProduct === 'all' || service.product === selectedProduct
-      const matchesStatus = selectedStatus === 'all' || service.status === selectedStatus
-      const matchesType = selectedType === 'all' || service.type === selectedType
       const matchesSearch = searchTerm === '' || 
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.node.toLowerCase().includes(searchTerm.toLowerCase())
       
-      return matchesProduct && matchesStatus && matchesType && matchesSearch
+      return matchesSearch
     })
   }
 
-  const allServices = [...mockServices.s101, ...mockServices.s102]
-  const filteredServices = filterServices(allServices)
+  const services = servicesData?.services || []
+  const filteredServices = filterServices(services)
 
   // 统计数据
-  const stats = {
-    total: allServices.length,
-    active: allServices.filter(s => s.status === 'ACTIVE').length,
-    warning: allServices.filter(s => s.status === 'WARNING').length,
-    error: allServices.filter(s => s.status === 'ERROR').length,
-    maintenance: allServices.filter(s => s.status === 'MAINTENANCE').length,
-    s101: mockServices.s101.length,
-    s102: mockServices.s102.length
+  const stats = servicesData?.stats || {
+    total: 0,
+    active: 0,
+    warning: 0,
+    error: 0,
+    maintenance: 0,
+    byProduct: {},
+    byType: {}
   }
 
-  const handleViewDetails = (service: any) => {
+  const handleViewDetails = (service: Service) => {
     setSelectedService(service)
     setShowDetailModal(true)
   }
 
-  const handleConfigure = (service: any) => {
+  const handleConfigure = (service: Service) => {
     setSelectedService(service)
     // 初始化配置数据
     setServiceConfig({
@@ -305,7 +256,7 @@ export default function ServicesManagement() {
     setShowConfigModal(true)
   }
 
-  const handleMonitor = (service: any) => {
+  const handleMonitor = (service: Service) => {
     setSelectedService(service)
     setShowMonitorModal(true)
   }
@@ -318,12 +269,11 @@ export default function ServicesManagement() {
   }
 
   const handleRefresh = () => {
-    // 模拟刷新功能
-    alert('服务状态已刷新')
+    fetchServices()
   }
 
   const handleAddService = () => {
-    // 模拟新增服务功能
+    // 导航到服务注册页面或打开注册对话框
     alert('新增服务功能正在开发中')
   }
 
@@ -366,8 +316,8 @@ export default function ServicesManagement() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               刷新状态
             </Button>
             <Button onClick={handleAddService}>
@@ -406,7 +356,7 @@ export default function ServicesManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">S-101服务</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.s101}</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.byProduct.S101 || 0}</p>
                 </div>
                 <Anchor className="h-12 w-12 text-blue-500 opacity-20" />
               </div>
@@ -417,7 +367,7 @@ export default function ServicesManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">S-102服务</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.s102}</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.byProduct.S102 || 0}</p>
                 </div>
                 <Waves className="h-12 w-12 text-purple-500 opacity-20" />
               </div>
@@ -497,8 +447,8 @@ export default function ServicesManagement() {
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">全部服务 ({filteredServices.length})</TabsTrigger>
-            <TabsTrigger value="s101">S-101服务 ({filterServices(mockServices.s101).length})</TabsTrigger>
-            <TabsTrigger value="s102">S-102服务 ({filterServices(mockServices.s102).length})</TabsTrigger>
+            <TabsTrigger value="s101">S-101服务 ({services.filter(s => s.product === 'S101').length})</TabsTrigger>
+            <TabsTrigger value="s102">S-102服务 ({services.filter(s => s.product === 'S102').length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -596,12 +546,12 @@ export default function ServicesManagement() {
 
           <TabsContent value="s101" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filterServices(mockServices.s101).map((service) => (
+              {filterServices(services.filter(s => s.product === 'S101')).map((service) => (
                 <Card key={service.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Anchor className="h-5 w-5 text-blue-600" />
+                        {getProductIcon(service.product)}
                         <CardTitle className="text-lg">{service.name}</CardTitle>
                       </div>
                       {getStatusBadge(service.status)}
@@ -684,12 +634,12 @@ export default function ServicesManagement() {
 
           <TabsContent value="s102" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filterServices(mockServices.s102).map((service) => (
+              {filterServices(services.filter(s => s.product === 'S102')).map((service) => (
                 <Card key={service.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Waves className="h-5 w-5 text-purple-600" />
+                        {getProductIcon(service.product)}
                         <CardTitle className="text-lg">{service.name}</CardTitle>
                       </div>
                       {getStatusBadge(service.status)}

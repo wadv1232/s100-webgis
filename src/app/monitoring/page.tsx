@@ -31,7 +31,7 @@ import {
   PieChart,
   LineChart
 } from 'lucide-react'
-import { mockMonitoringData } from '@/mock-data'
+
 
 // 健康状态配置
 const HEALTH_STATUS = {
@@ -118,7 +118,7 @@ interface MonitoringData {
 }
 
 export default function MonitoringPage() {
-  const [monitoringData, setMonitoringData] = useState<MonitoringData>(mockMonitoringData)
+  const [monitoringData, setMonitoringData] = useState<MonitoringData | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h')
 
@@ -183,6 +183,54 @@ export default function MonitoringPage() {
     return `${diffDays}天前`
   }
 
+  // 默认数据结构，防止空值错误
+  const defaultData: MonitoringData = {
+    nodeStats: {
+      total: 0,
+      healthy: 0,
+      warning: 0,
+      error: 0,
+      offline: 0,
+      byType: {
+        GLOBAL_ROOT: 0,
+        NATIONAL: 0,
+        REGIONAL: 0,
+        LEAF: 0
+      }
+    },
+    datasetStats: {
+      total: 0,
+      byStatus: {
+        UPLOADED: 0,
+        PROCESSING: 0,
+        PUBLISHED: 0,
+        ARCHIVED: 0,
+        ERROR: 0
+      },
+      byProduct: {
+        S101: 0,
+        S102: 0,
+        S104: 0,
+        S111: 0,
+        S124: 0,
+        S125: 0,
+        S131: 0
+      }
+    },
+    serviceStats: {
+      total: 0,
+      byType: {
+        WFS: 0,
+        WMS: 0,
+        WCS: 0
+      }
+    },
+    recentHealthChecks: [],
+    systemHealth: 0
+  }
+
+  const displayData = monitoringData || defaultData
+
   useEffect(() => {
     fetchMonitoringData()
     
@@ -231,11 +279,11 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">系统健康度</p>
-                <p className="text-2xl font-bold text-green-600">{monitoringData.systemHealth}%</p>
+                <p className="text-2xl font-bold text-green-600">{displayData.systemHealth}%</p>
               </div>
               <Heart className="h-8 w-8 text-green-500" />
             </div>
-            <Progress value={monitoringData.systemHealth} className="mt-2" />
+            <Progress value={displayData.systemHealth} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -245,18 +293,18 @@ export default function MonitoringPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">在线节点</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {monitoringData.nodeStats.healthy + monitoringData.nodeStats.warning}
-                  <span className="text-sm text-gray-500">/{monitoringData.nodeStats.total}</span>
+                  {displayData.nodeStats.healthy + displayData.nodeStats.warning}
+                  <span className="text-sm text-gray-500">/{displayData.nodeStats.total}</span>
                 </p>
               </div>
               <Server className="h-8 w-8 text-blue-500" />
             </div>
             <div className="flex gap-1 mt-2">
               <div className="text-xs text-green-600">
-                ✓ {monitoringData.nodeStats.healthy}
+                ✓ {displayData.nodeStats.healthy}
               </div>
               <div className="text-xs text-yellow-600">
-                ⚠ {monitoringData.nodeStats.warning}
+                ⚠ {displayData.nodeStats.warning}
               </div>
             </div>
           </CardContent>
@@ -267,14 +315,14 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">活跃服务</p>
-                <p className="text-2xl font-bold text-purple-600">{monitoringData.serviceStats.total}</p>
+                <p className="text-2xl font-bold text-purple-600">{displayData.serviceStats.total}</p>
               </div>
               <Zap className="h-8 w-8 text-purple-500" />
             </div>
             <div className="text-xs text-gray-500 mt-2">
-              WFS: {monitoringData.serviceStats.byType.WFS} | 
-              WMS: {monitoringData.serviceStats.byType.WMS} | 
-              WCS: {monitoringData.serviceStats.byType.WCS}
+              WFS: {displayData.serviceStats.byType.WFS} | 
+              WMS: {displayData.serviceStats.byType.WMS} | 
+              WCS: {displayData.serviceStats.byType.WCS}
             </div>
           </CardContent>
         </Card>
@@ -285,14 +333,14 @@ export default function MonitoringPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">已发布数据集</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {monitoringData.datasetStats.byStatus.PUBLISHED}
-                  <span className="text-sm text-gray-500">/{monitoringData.datasetStats.total}</span>
+                  {displayData.datasetStats.byStatus.PUBLISHED}
+                  <span className="text-sm text-gray-500">/{displayData.datasetStats.total}</span>
                 </p>
               </div>
               <Database className="h-8 w-8 text-orange-500" />
             </div>
             <div className="text-xs text-gray-500 mt-2">
-              处理中: {monitoringData.datasetStats.byStatus.PROCESSING}
+              处理中: {displayData.datasetStats.byStatus.PROCESSING}
             </div>
           </CardContent>
         </Card>
@@ -313,9 +361,9 @@ export default function MonitoringPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Object.entries(HEALTH_STATUS).map(([status, config]) => {
-                  const count = monitoringData.nodeStats[status.toLowerCase() as keyof typeof monitoringData.nodeStats]
-                  const percentage = monitoringData.nodeStats.total > 0 
-                    ? Math.round((count / monitoringData.nodeStats.total) * 100) 
+                  const count = displayData.nodeStats[status.toLowerCase() as keyof typeof displayData.nodeStats]
+                  const percentage = displayData.nodeStats.total > 0 
+                    ? Math.round((count / displayData.nodeStats.total) * 100) 
                     : 0
                   
                   return (
@@ -349,9 +397,9 @@ export default function MonitoringPage() {
               <CardContent>
                 <div className="space-y-3">
                   {Object.entries(DATASET_STATUS).map(([status, config]) => {
-                    const count = monitoringData.datasetStats.byStatus[status]
-                    const percentage = monitoringData.datasetStats.total > 0 
-                      ? Math.round((count / monitoringData.datasetStats.total) * 100) 
+                    const count = displayData.datasetStats.byStatus[status]
+                    const percentage = displayData.datasetStats.total > 0 
+                      ? Math.round((count / displayData.datasetStats.total) * 100) 
                       : 0
                     
                     return (
@@ -381,11 +429,11 @@ export default function MonitoringPage() {
               <CardContent>
                 <div className="space-y-3">
                   {Object.entries(S100_PRODUCTS).map(([product, config]) => {
-                    const count = monitoringData.datasetStats.byProduct[product]
+                    const count = displayData.datasetStats.byProduct[product]
                     if (count === 0) return null
                     
-                    const percentage = monitoringData.datasetStats.total > 0 
-                      ? Math.round((count / monitoringData.datasetStats.total) * 100) 
+                    const percentage = displayData.datasetStats.total > 0 
+                      ? Math.round((count / displayData.datasetStats.total) * 100) 
                       : 0
                     
                     return (
@@ -419,7 +467,7 @@ export default function MonitoringPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {monitoringData.recentHealthChecks.map((check) => {
+                {displayData.recentHealthChecks.map((check) => {
                   const HealthIcon = getHealthIcon(check.status)
                   const NodeTypeIcon = getNodeTypeIcon(check.type)
                   const nodeType = NODE_TYPES[check.type as keyof typeof NODE_TYPES]
@@ -458,11 +506,11 @@ export default function MonitoringPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">节点可用性</span>
                     <span className="text-sm text-green-600">
-                      {Math.round(((monitoringData.nodeStats.healthy + monitoringData.nodeStats.warning) / monitoringData.nodeStats.total) * 100)}%
+                      {Math.round(((displayData.nodeStats.healthy + displayData.nodeStats.warning) / displayData.nodeStats.total) * 100)}%
                     </span>
                   </div>
                   <Progress 
-                    value={((monitoringData.nodeStats.healthy + monitoringData.nodeStats.warning) / monitoringData.nodeStats.total) * 100} 
+                    value={((displayData.nodeStats.healthy + displayData.nodeStats.warning) / displayData.nodeStats.total) * 100} 
                     className="h-2" 
                   />
                 </div>
@@ -479,11 +527,11 @@ export default function MonitoringPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">数据处理成功率</span>
                     <span className="text-sm text-purple-600">
-                      {Math.round((monitoringData.datasetStats.byStatus.PUBLISHED / monitoringData.datasetStats.total) * 100)}%
+                      {Math.round((displayData.datasetStats.byStatus.PUBLISHED / displayData.datasetStats.total) * 100)}%
                     </span>
                   </div>
                   <Progress 
-                    value={(monitoringData.datasetStats.byStatus.PUBLISHED / monitoringData.datasetStats.total) * 100} 
+                    value={(displayData.datasetStats.byStatus.PUBLISHED / displayData.datasetStats.total) * 100} 
                     className="h-2" 
                   />
                 </div>
@@ -521,7 +569,7 @@ export default function MonitoringPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {monitoringData.recentHealthChecks.map((check) => {
+              {displayData.recentHealthChecks.map((check) => {
                 const HealthIcon = getHealthIcon(check.status)
                 const NodeTypeIcon = getNodeTypeIcon(check.type)
                 const nodeType = NODE_TYPES[check.type as keyof typeof NODE_TYPES]
