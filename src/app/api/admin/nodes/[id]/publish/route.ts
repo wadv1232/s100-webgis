@@ -24,15 +24,11 @@ export async function POST(
       include: {
         capabilities: {
           where: { isEnabled: true },
-          include: {
-            datasets: {
-              select: {
-                id: true,
-                name: true,
-                status: true,
-                publishedAt: true
-              }
-            }
+          select: {
+            productType: true,
+            serviceType: true,
+            endpoint: true,
+            version: true
           }
         },
         parent: {
