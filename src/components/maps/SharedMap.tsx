@@ -399,6 +399,11 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
       if (mode === 'edit' && editable && editingNode) {
         handleMapClick(e)
       }
+      
+      // 如果在绘制模式下，处理地图点击以添加绘制点
+      if (isDrawing && editingNode) {
+        handleMapClick(e)
+      }
     })
 
     // 监听地图加载事件
@@ -650,19 +655,23 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
 
   // 开始绘制
   const startDrawing = (mode: 'polygon' | 'rectangle' | 'marker' = 'polygon') => {
-    if (!mapRef.current || !isMapLoaded) return
+    if (!mapRef.current || !isMapLoaded) {
+      console.log('Cannot start drawing: map not ready')
+      return
+    }
 
+    console.log('Starting drawing mode:', mode)
     setDrawMode(mode)
     setIsDrawing(true)
     setDrawPoints([])
     
     // 清除之前的临时图层
-    if (tempLayer) {
+    if (tempLayer && mapRef.current) {
       mapRef.current.removeLayer(tempLayer)
       setTempLayer(null)
     }
 
-    console.log('Started drawing mode:', mode)
+    console.log('Drawing mode started successfully:', mode)
   }
 
   // 停止绘制
@@ -874,22 +883,25 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     const lat = e.latlng.lat
     const lng = e.latlng.lng
 
-    console.log('Map clicked at:', lat, lng)
+    console.log('Map clicked at:', lat, lng, 'Drawing mode:', isDrawing, 'Draw mode:', drawMode)
 
     // 如果在绘制模式下，添加绘制点
     if (isDrawing) {
       const newPoint: [number, number] = [lng, lat]
       const newPoints = [...drawPoints, newPoint]
       setDrawPoints(newPoints)
+      console.log('Added draw point:', newPoint, 'Total points:', newPoints.length)
 
       // 清除之前的临时图层
       if (tempLayer && mapRef.current) {
         mapRef.current.removeLayer(tempLayer)
+        setTempLayer(null)
       }
 
       // 创建新的临时图层
       if (drawMode === 'marker') {
         // 标记模式
+        console.log('Creating marker at:', [lat, lng])
         const marker = L.marker([lat, lng], {
           icon: L.icon({
             iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
@@ -906,9 +918,11 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
         // 标记模式只需要一个点，自动完成
         setTimeout(() => finishDrawing(), 100)
       } else if (drawMode === 'polygon' && newPoints.length >= 3) {
-        // 多边形模式
+        // 多边形模式 - 闭合多边形
+        console.log('Creating polygon with points:', newPoints)
         const latlngs = newPoints.map(([lng, lat]) => [lat, lng])
-        const polygon = L.polygon(latlngs, {
+        const closedLatlngs = [...latlngs, latlngs[0]] // 闭合多边形
+        const polygon = L.polygon(closedLatlngs, {
           color: '#ef4444',
           weight: 3,
           fillColor: '#ef4444',
@@ -918,6 +932,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
         setTempLayer(polygon)
       } else if (drawMode === 'rectangle' && newPoints.length === 2) {
         // 矩形模式
+        console.log('Creating rectangle with points:', newPoints)
         const [[lng1, lat1], [lng2, lat2]] = newPoints
         const bounds = L.latLngBounds([lat1, lng1], [lat2, lng2])
         const rectangle = L.rectangle(bounds, {
@@ -933,6 +948,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
         setTimeout(() => finishDrawing(), 100)
       } else if (drawMode === 'polygon') {
         // 多边形模式，显示临时线条
+        console.log('Creating polyline with points:', newPoints)
         const latlngs = newPoints.map(([lng, lat]) => [lat, lng])
         const polyline = L.polyline(latlngs, {
           color: '#ef4444',
