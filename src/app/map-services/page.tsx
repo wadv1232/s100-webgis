@@ -35,7 +35,7 @@ import {
   Info,
   TestTube
 } from 'lucide-react'
-import S100ServiceMap from '@/components/maps/SharedMap'
+import S100ServiceMap from '@/components/maps/SharedMapFixed'
 import ServiceDetailModal from '@/components/ui/ServiceDetailModal'
 import { mapServiceNodes, mockS100Services } from '@/mock-data'
 

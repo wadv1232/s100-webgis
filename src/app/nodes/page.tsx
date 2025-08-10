@@ -28,7 +28,7 @@ import {
   Download,
   Upload
 } from 'lucide-react'
-import SharedMap, { SharedMapRef } from '@/components/maps/SharedMap'
+import SimpleMap, { SimpleMapRef } from '@/components/maps/SimpleMap'
 import NodeTreeView from '@/components/nodes/NodeTreeView'
 
 interface Node {
@@ -110,7 +110,7 @@ export default function NodesPage() {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   
   // 地图组件引用
-  const mapRef = useRef<SharedMapRef>(null)
+  const mapRef = useRef<SimpleMapRef>(null)
   
   // 地图配置状态
   const [serviceConfig, setServiceConfig] = useState({
@@ -845,7 +845,7 @@ export default function NodesPage() {
                     <CardTitle>覆盖范围</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <SharedMap
+                    <SimpleMap
                       ref={mapRef}
                       nodes={convertNodesToMapFormat(getMapNodes())}
                       selectedNode={selectedNode ? {
@@ -871,24 +871,44 @@ export default function NodesPage() {
                       editable={true}
                       height="400px"
                       onGeometryUpdate={handleGeometryUpdate}
-                      baseMapConfig={serviceConfig.baseMap}
-                      displayConfig={serviceConfig.display}
                     />
                     <div className="mt-4 flex justify-between items-center">
                       <div className="text-sm text-muted-foreground">
                         {selectedNode.coverage ? '已配置覆盖范围' : '未配置覆盖范围'}
                       </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingCoverage(JSON.stringify(selectedNode.coverage, null, 2))
-                          setIsCoverageDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        编辑GeoJSON
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          onClick={() => {
+                            console.log('Edit geography data button clicked for node:', selectedNode?.name)
+                            if (mapRef.current && selectedNode) {
+                              console.log('Starting edit mode for node:', selectedNode.name)
+                              if (mapRef.current.startEditing) {
+                                mapRef.current.startEditing(selectedNode)
+                              } else {
+                                console.log('startEditing method not available')
+                              }
+                            } else {
+                              console.warn('Map reference or selected node not available')
+                            }
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          编辑地理数据
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setEditingCoverage(JSON.stringify(selectedNode.coverage, null, 2))
+                            setIsCoverageDialogOpen(true)
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          编辑GeoJSON
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -903,7 +923,7 @@ export default function NodesPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <SharedMap
+                    <SimpleMap
                       nodes={convertNodesToMapFormat(getMapNodes())}
                       selectedNode={selectedNode ? {
                         id: selectedNode.id,
@@ -928,8 +948,6 @@ export default function NodesPage() {
                       editable={true}
                       height="500px"
                       onGeometryUpdate={handleGeometryUpdate}
-                      baseMapConfig={serviceConfig.baseMap}
-                      displayConfig={serviceConfig.display}
                     />
                     <div className="mt-4 space-y-4">
                       <div>
@@ -941,6 +959,26 @@ export default function NodesPage() {
                         />
                       </div>
                       <div className="flex gap-2">
+                        <Button 
+                          size="sm"
+                          variant="default"
+                          onClick={() => {
+                            console.log('Edit geography data button clicked for node:', selectedNode?.name)
+                            if (mapRef.current && selectedNode) {
+                              console.log('Starting edit mode for node:', selectedNode.name)
+                              if (mapRef.current.startEditing) {
+                                mapRef.current.startEditing(selectedNode)
+                              } else {
+                                console.log('startEditing method not available')
+                              }
+                            } else {
+                              console.warn('Map reference or selected node not available')
+                            }
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          编辑地理数据
+                        </Button>
                         <Button 
                           size="sm"
                           onClick={() => {

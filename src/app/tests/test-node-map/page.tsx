@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import SharedMap from '@/components/maps/SharedMap'
+import SharedMap from '@/components/maps/SharedMapFixed'
 
 interface TestNode {
   id: string

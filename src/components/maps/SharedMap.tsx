@@ -42,11 +42,9 @@ import {
   calculateBoundingBox
 } from '@/lib/utils/geo-utils'
 
-// Import Leaflet dynamically for better control
-let L: any
-if (typeof window !== 'undefined') {
-  // Don't import immediately, we'll import it when needed
-}
+// Import Leaflet with proper SSR handling
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 // Types
 interface NodeType {
@@ -274,7 +272,7 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
   }, [previewService])
 
   // 地图初始化函数
-  const initializeMap = async () => {
+  const initializeMap = () => {
     if (mapRef.current) {
       console.log('Map already initialized')
       return
@@ -285,12 +283,6 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     
     try {
       console.log('Starting map initialization...')
-      
-      // Dynamically import Leaflet
-      const leafletModule = await import('leaflet')
-      await import('leaflet/dist/leaflet.css')
-      
-      L = leafletModule.default || leafletModule
       
       console.log('Leaflet imported successfully')
       

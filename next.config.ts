@@ -26,6 +26,32 @@ const nextConfig: NextConfig = {
       },
     };
     
+    // 禁用Leaflet的代码分割，确保它被正确打包
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization?.splitChunks,
+          chunks: 'all',
+          cacheGroups: {
+            leaflet: {
+              test: /[\\/]node_modules[\\/]leaflet[\\/]/,
+              name: 'leaflet',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+              priority: 10,
+            },
+          },
+        },
+      };
+    }
+    
     return config;
   },
 };

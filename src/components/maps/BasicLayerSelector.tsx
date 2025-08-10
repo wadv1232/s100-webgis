@@ -10,17 +10,17 @@ interface MapLayer {
   icon?: string
 }
 
-interface MapLayerSelectorProps {
+interface BasicLayerSelectorProps {
   layers: MapLayer[]
   onLayerToggle: (layerId: string, visible: boolean) => void
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 }
 
-export default function MapLayerSelector({
+export default function BasicLayerSelector({
   layers,
   onLayerToggle,
   position = 'bottom-left'
-}: MapLayerSelectorProps) {
+}: BasicLayerSelectorProps) {
   const getPositionClasses = () => {
     switch (position) {
       case 'top-left':
