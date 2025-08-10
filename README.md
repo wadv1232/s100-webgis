@@ -1,4 +1,15 @@
-# 🌊 S-100 海事服务平台
+---
+title: S-100 WebGIS Maritime Service Platform
+description: A comprehensive maritime data service platform based on IHO S-100 standards
+author: Development Team
+date: 2024-01-01
+version: 1.0.0
+category: Project Overview
+tags: [maritime, S-100, WebGIS, next.js]
+language: zh-CN
+---
+
+# 🌊 S-100 海事服务平台 (S-100 WebGIS)
 
 基于分层递归架构的全球海事数据服务网络，为终端用户提供统一、可靠的海事信息访问入口。采用现代化技术栈构建，符合国际海道测量组织（IHO）S-100系列标准。
 

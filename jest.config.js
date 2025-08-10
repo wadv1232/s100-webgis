@@ -17,7 +17,7 @@ const customJestConfig = {
   ],
   
   // 设置模块路径映射
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   
@@ -63,7 +63,7 @@ const customJestConfig = {
   ],
   
   // 设置模拟文件
-  mockFiles: ['<rootDir>/tests/__mocks__'],
+  setupFiles: ['<rootDir>/tests/__mocks__/setup.js'],
   
   // 设置全局变量
   globals: {

@@ -1,26 +1,28 @@
 ---
-title: S100海事服务系统文档
-description: 项目文档导航和概述
-author: 开发团队
+title: S-100 WebGIS Documentation Portal
+description: Comprehensive documentation portal for the S-100 WebGIS maritime service platform
+author: Development Team
 date: 2024-01-01
 version: 1.0.0
-category: 项目文档
-tags: [文档, 导航, 概述]
+category: Documentation
+tags: [documentation, guide, reference]
+language: zh-CN
 ---
 
-# S100海事服务系统文档
+# S-100 WebGIS 文档中心
 
 ## 概述
 
-S100海事服务系统是一个基于Next.js 15和TypeScript的现代化Web应用，专门为海事数据服务提供完整的解决方案。系统集成了地图服务、节点管理、服务管理等多个核心功能模块。
+S-100 WebGIS 是一个基于 Next.js 15 和 TypeScript 的现代化 Web 应用，专门为海事数据服务提供完整的解决方案。系统集成了地图服务、节点管理、服务管理等多个核心功能模块，符合国际海道测量组织（IHO）S-100 系列标准。
 
 ## 快速导航
 
 ### 📚 核心文档
-- [编码规范](./CODING_STANDARDS.md) - 代码编写规范和最佳实践
+- [编码规范](./CODING_STANDARDS.md) - S-100 WebGIS 编码规范和最佳实践
 - [文档规范](./DOCUMENTATION_STANDARDS.md) - 文档编写规范和格式要求
 - [系统架构](./ARCHITECTURE.md) - 系统整体架构设计
 - [代码示例](./CODE_EXAMPLES.md) - 实用代码示例和最佳实践
+- [文档整理总结](./DOCUMENTATION_ORGANIZATION_SUMMARY.md) - 文档整理与标准化总结
 
 ### 📊 项目总结与报告
 - [项目总结报告](./PROJECT_SUMMARY/) - 项目开发总结和状态报告

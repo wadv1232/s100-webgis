@@ -1,8 +1,19 @@
-# 编码规范
+---
+title: S-100 WebGIS Coding Standards
+description: Comprehensive coding standards for the S-100 WebGIS project
+author: Development Team
+date: 2024-01-01
+version: 1.0.0
+category: Development
+tags: [coding, standards, best-practices]
+language: zh-CN
+---
+
+# S-100 WebGIS 编码规范
 
 ## 概述
 
-本文档定义了S100海事服务系统项目的编码规范，确保代码质量和一致性。
+本文档定义了 S-100 WebGIS 项目的编码规范，确保代码质量和一致性。所有开发者必须遵循这些规范来维护代码库的可读性和可维护性。
 
 ## 1. 通用规范
 

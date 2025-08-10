@@ -1,61 +1,51 @@
-# 文档规范
+# S-100 WebGIS 文档规范
 
 ## 概述
 
-本文档定义了S100海事服务系统项目的文档编写规范，确保文档的一致性、完整性和可维护性。
+本文档定义了S-100 WebGIS项目的文档编写规范，确保文档的一致性、完整性和可维护性。项目采用中英文双语文档策略，技术文档以英文为主，业务文档以中文为主。
 
-## 1. 文档结构规范
+## 1. 文档分类和结构
 
 ### 1.1 项目文档目录结构
 ```
 docs/
 ├── README.md                           # 文档导航和概述
 ├── CODING_STANDARDS.md                 # 编码规范
-├── DOCUMENTATION_STANDARDS.md          # 文档规范
+├── DOCUMENTATION_STANDARDS.md          # 文档规范 (本文档)
 ├── ARCHITECTURE.md                     # 系统架构
+├── CODE_EXAMPLES.md                    # 代码示例
 ├── API/
 │   ├── README.md                       # API文档概述
 │   ├── REST_API.md                     # REST API文档
-│   ├── GRAPHQL_API.md                  # GraphQL API文档
 │   └── WEBSOCKET_API.md                # WebSocket API文档
 ├── GUIDES/
 │   ├── README.md                       # 开发指南概述
 │   ├── GETTING_STARTED.md              # 快速开始
-│   ├── DEVELOPMENT_SETUP.md            # 开发环境搭建
-│   ├── DEPLOYMENT.md                   # 部署指南
-│   ├── TESTING.md                      # 测试指南
-│   └── TROUBLESHOOTING.md              # 故障排除
+│   ├── DEVELOPMENT.md                  # 开发环境搭建
+│   └── DEPLOYMENT.md                   # 部署指南
 ├── COMPONENTS/
 │   ├── README.md                       # 组件文档概述
-│   ├── UI_COMPONENTS.md                # UI组件文档
 │   ├── MAP_COMPONENTS.md               # 地图组件文档
-│   └── FORM_COMPONENTS.md              # 表单组件文档
+│   └── UI_COMPONENTS.md                # UI组件文档
 ├── FEATURES/
 │   ├── README.md                       # 功能文档概述
-│   ├── USER_MANAGEMENT.md              # 用户管理功能
-│   ├── NODE_MANAGEMENT.md              # 节点管理功能
-│   ├── SERVICE_MANAGEMENT.md           # 服务管理功能
-│   └── MAP_SERVICES.md                 # 地图服务功能
+│   ├── MAP_SERVICES.md                 # 地图服务功能
+│   └── NODE_MANAGEMENT.md              # 节点管理功能
 ├── DATABASE/
 │   ├── README.md                       # 数据库文档概述
 │   ├── SCHEMA.md                       # 数据库模式
-│   ├── MIGRATIONS.md                   # 数据库迁移
-│   └── SEEDING.md                      # 数据库种子
-├── SECURITY/
-│   ├── README.md                       # 安全文档概述
-│   ├── AUTHENTICATION.md               # 认证机制
-│   ├── AUTHORIZATION.md                # 授权机制
-│   └── DATA_PROTECTION.md              # 数据保护
-├── PERFORMANCE/
-│   ├── README.md                       # 性能文档概述
-│   ├── OPTIMIZATION.md                 # 性能优化
-│   ├── MONITORING.md                   # 性能监控
-│   └── SCALING.md                      # 扩展性
-└── CHANGELOG/
-    ├── README.md                       # 更新日志概述
-    ├── v1.0.0.md                       # 版本1.0.0更新
-    ├── v1.1.0.md                       # 版本1.1.0更新
-    └── v2.0.0.md                       # 版本2.0.0更新
+│   └── USAGE.md                        # 数据库使用指南
+├── DEVELOPMENT/
+│   ├── README.md                       # 开发文档概述
+│   ├── TASK_MANAGEMENT_GUIDE.md       # 任务管理指南
+│   └── tasks/                          # 任务相关文档
+│       ├── templates/                  # 任务模板
+│       └── completed/                  # 已完成任务
+├── PROJECT_SUMMARY/
+│   ├── README.md                       # 项目总结概述
+│   └── [各种报告文件]                  # 项目状态报告
+└── TOOLS/
+    └── README.md                       # 工具文档概述
 ```
 
 ### 1.2 代码内文档结构
@@ -63,28 +53,536 @@ docs/
 src/
 ├── components/
 │   ├── ComponentName/
-│   │   ├── index.tsx                   # 组件主文件
+│   │   ├── index.tsx                   # 组件导出文件
 │   │   ├── ComponentName.tsx           # 组件实现
 │   │   ├── ComponentName.types.ts      # 组件类型定义
 │   │   ├── ComponentName.test.tsx      # 组件测试
-│   │   ├── ComponentName.stories.tsx   # 组件故事书
 │   │   └── README.md                   # 组件文档
-│   └── ...
 ├── lib/
 │   ├── services/
 │   │   ├── serviceName.ts              # 服务实现
 │   │   ├── serviceName.types.ts       # 服务类型定义
 │   │   ├── serviceName.test.ts        # 服务测试
 │   │   └── README.md                   # 服务文档
-│   └── ...
+│   └── utils/
+│       ├── utilName.ts                 # 工具函数
+│       ├── utilName.test.ts           # 工具测试
+│       └── README.md                   # 工具文档
 ├── hooks/
 │   ├── useHookName.ts                  # Hook实现
 │   ├── useHookName.test.ts            # Hook测试
 │   └── README.md                       # Hook文档
-└── ...
+└── app/
+    └── api/
+        └── [route]/
+            ├── route.ts                 # API路由
+            ├── route.test.ts            # API测试
+            └── README.md                 # API文档
 ```
 
 ## 2. 文档格式规范
+
+### 2.1 Markdown文档格式
+
+#### 文档头部元数据
+```markdown
+---
+title: 文档标题
+description: 文档描述
+author: 作者姓名
+date: 2024-01-01
+version: 1.0.0
+category: 文档分类
+tags: [标签1, 标签2]
+language: zh-CN # 或 en-US
+---
+
+# 文档标题
+
+## 概述
+
+本文档描述了...
+```
+
+#### 标题层级规范
+```markdown
+# 一级标题 (文档标题)
+## 二级标题 (主要章节)
+### 三级标题 (子章节)
+#### 四级标题 (小节)
+##### 五级标题 (子小节)
+###### 六级标题 (段落标题)
+```
+
+#### 代码块格式
+```markdown
+```typescript
+// TypeScript代码
+const example: string = "Hello World";
+```
+
+```javascript
+// JavaScript代码
+const example = "Hello World";
+```
+
+```bash
+# 命令行
+npm install
+```
+
+```json
+// JSON配置
+{
+  "key": "value"
+}
+```
+
+```sql
+-- SQL查询
+SELECT * FROM users WHERE id = 1;
+```
+```
+
+#### 表格格式
+```markdown
+| 参数名 | 类型 | 必需 | 描述 | 默认值 |
+|--------|------|------|------|--------|
+| id | string | 是 | 用户ID | - |
+| name | string | 是 | 用户名称 | - |
+| email | string | 是 | 用户邮箱 | - |
+| isActive | boolean | 否 | 是否激活 | true |
+```
+
+#### 链接和引用
+```markdown
+[链接文本](链接地址)
+
+[内部链接](../GUIDES/GETTING_STARTED.md)
+
+[外部链接](https://example.com)
+
+[引用链接][reference-link]
+
+[reference-link]: https://example.com
+```
+
+#### 图片格式
+```markdown
+![图片描述](图片路径)
+
+![架构图](./images/architecture.png)
+
+![流程图](./images/workflow.svg "工作流程")
+```
+
+#### 提示和警告
+```markdown
+> **注意**: 这是一个重要提示
+
+> **警告**: 这是一个警告信息
+
+> **危险**: 这是一个危险操作提示
+
+> **提示**: 这是一个有用的提示
+```
+
+#### 列表格式
+```markdown
+无序列表：
+- 项目1
+- 项目2
+  - 子项目1
+  - 子项目2
+- 项目3
+
+有序列表：
+1. 第一步
+2. 第二步
+   1. 子步骤1
+   2. 子步骤2
+3. 第三步
+
+任务列表：
+- [x] 已完成任务
+- [ ] 未完成任务
+```
+
+### 2.2 JSDoc注释规范
+
+#### 文件注释
+```typescript
+/**
+ * @fileoverview 用户服务模块
+ * 提供用户相关的业务逻辑和数据操作
+ * @author 开发者姓名
+ * @since 2024-01-01
+ * @version 1.0.0
+ * @module services/userService
+ */
+```
+
+#### 类注释
+```typescript
+/**
+ * 用户服务类
+ * 提供用户管理的核心功能
+ * @class UserService
+ */
+export class UserService {
+  /**
+   * 创建用户服务实例
+   * @param {ApiClient} apiClient - API客户端
+   */
+  constructor(apiClient: ApiClient) {
+    this.apiClient = apiClient;
+  }
+}
+```
+
+#### 函数注释
+```typescript
+/**
+ * 获取用户信息
+ * @param {string} userId - 用户ID
+ * @returns {Promise<User>} 用户信息对象
+ * @throws {Error} 当用户不存在时抛出错误
+ * @example
+ * ```typescript
+ * const user = await userService.getUser('123');
+ * console.log(user.name);
+ * ```
+ */
+export const getUser = async (userId: string): Promise<User> => {
+  // 实现
+};
+```
+
+#### 接口注释
+```typescript
+/**
+ * 用户接口定义
+ * @interface User
+ */
+export interface User {
+  /** 用户ID */
+  id: string;
+  /** 用户名称 */
+  name: string;
+  /** 用户邮箱 */
+  email: string;
+  /** 是否激活 */
+  isActive: boolean;
+  /** 创建时间 */
+  createdAt: Date;
+  /** 更新时间 */
+  updatedAt: Date;
+}
+```
+
+#### 枚举注释
+```typescript
+/**
+ * 用户状态枚举
+ * @enum {string}
+ */
+export enum UserStatus {
+  /** 激活状态 */
+  ACTIVE = 'active',
+  /** 未激活状态 */
+  INACTIVE = 'inactive',
+  /** 待审核状态 */
+  PENDING = 'pending'
+}
+```
+
+### 2.3 React组件文档规范
+
+#### 组件JSDoc
+```typescript
+/**
+ * 用户资料组件
+ * 显示用户基本信息和操作按钮
+ * @component UserProfile
+ * @example
+ * ```tsx
+ * <UserProfile 
+ *   user={user} 
+ *   onEdit={handleEdit} 
+ *   onDelete={handleDelete} 
+ * />
+ * ```
+ */
+interface UserProfileProps {
+  /** 用户信息对象 */
+  user: User;
+  /** 编辑回调函数 */
+  onEdit?: (user: User) => void;
+  /** 删除回调函数 */
+  onDelete?: (userId: string) => void;
+  /** 是否显示操作按钮 */
+  showActions?: boolean;
+}
+
+export const UserProfile: React.FC<UserProfileProps> = ({
+  user,
+  onEdit,
+  onDelete,
+  showActions = true
+}) => {
+  // 组件实现
+};
+```
+
+#### 组件README模板
+```markdown
+# UserProfile Component
+
+## 概述
+
+用户资料组件用于显示用户的基本信息和提供相关操作。
+
+## 使用示例
+
+### 基本使用
+```tsx
+import { UserProfile } from '@/components/UserProfile';
+
+<UserProfile user={user} />
+```
+
+### 完整使用
+```tsx
+<UserProfile 
+  user={user}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  showActions={true}
+/>
+```
+
+## 属性
+
+| 属性名 | 类型 | 必需 | 默认值 | 描述 |
+|--------|------|------|--------|------|
+| user | User | 是 | - | 用户信息对象 |
+| onEdit | (user: User) => void | 否 | - | 编辑回调函数 |
+| onDelete | (userId: string) => void | 否 | - | 删除回调函数 |
+| showActions | boolean | 否 | true | 是否显示操作按钮 |
+
+## 样式
+
+组件使用以下CSS类名：
+- `user-profile`: 主容器
+- `user-profile__header`: 头部区域
+- `user-profile__content`: 内容区域
+- `user-profile__actions`: 操作按钮区域
+
+## 无障碍性
+
+- 使用适当的ARIA属性
+- 支持键盘导航
+- 提供屏幕阅读器支持
+
+## 相关组件
+
+- [UserList](../UserList/README.md)
+- [UserForm](../UserForm/README.md)
+```
+
+### 2.4 API文档规范
+
+#### REST API文档模板
+```markdown
+## 获取用户信息
+
+### 请求
+- **方法**: `GET`
+- **路径**: `/api/users/{id}`
+- **认证**: Bearer Token
+- **内容类型**: `application/json`
+
+### 路径参数
+| 参数名 | 类型 | 必需 | 描述 |
+|--------|------|------|------|
+| id | string | 是 | 用户ID |
+
+### 查询参数
+| 参数名 | 类型 | 必需 | 默认值 | 描述 |
+|--------|------|------|--------|------|
+| include | string | 否 | - | 包含的字段 |
+
+### 请求示例
+```bash
+curl -X GET "http://localhost:3000/api/users/123?include=profile" \
+  -H "Authorization: Bearer token" \
+  -H "Content-Type: application/json"
+```
+
+### 响应
+
+#### 成功响应 (200 OK)
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "isActive": true,
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+#### 错误响应
+```json
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "用户不存在"
+  }
+}
+```
+
+### 状态码
+| 状态码 | 描述 |
+|--------|------|
+| 200 | 成功 |
+| 400 | 请求参数错误 |
+| 401 | 未授权 |
+| 404 | 用户不存在 |
+| 500 | 服务器内部错误 |
+```
+
+### 2.5 数据库文档规范
+
+#### 表结构文档
+```markdown
+## users 表
+
+### 表描述
+存储用户基本信息和账户状态。
+
+### 字段定义
+| 字段名 | 类型 | 约束 | 默认值 | 描述 |
+|--------|------|------|--------|------|
+| id | VARCHAR(36) | PRIMARY KEY | - | 用户ID |
+| name | VARCHAR(255) | NOT NULL | - | 用户名称 |
+| email | VARCHAR(255) | NOT NULL, UNIQUE | - | 用户邮箱 |
+| password_hash | VARCHAR(255) | NOT NULL | - | 密码哈希 |
+| is_active | BOOLEAN | NOT NULL | true | 是否激活 |
+| created_at | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+### 索引
+| 索引名 | 字段 | 类型 | 描述 |
+|--------|------|------|------|
+| idx_users_email | email | UNIQUE | 邮箱唯一索引 |
+| idx_users_active | is_active | NORMAL | 活跃状态索引 |
+
+### 外键约束
+| 外键名 | 字段 | 引用表 | 引用字段 | 删除规则 |
+|--------|------|--------|----------|----------|
+| fk_users_role_id | role_id | roles | id | CASCADE |
+
+### 触发器
+| 触发器名 | 时机 | 事件 | 描述 |
+|----------|------|------|------|
+| trg_users_updated_at | BEFORE | UPDATE | 自动更新updated_at字段 |
+```
+
+## 3. 语言规范
+
+### 3.1 语言选择原则
+- **技术文档**: 使用英文，确保国际开发者可理解
+- **业务文档**: 使用中文，确保业务人员可理解
+- **代码注释**: 使用英文，遵循行业标准
+- **用户界面**: 使用中文，面向最终用户
+
+### 3.2 术语一致性
+- **统一术语**: 在整个文档中使用一致的术语
+- **中英文对照**: 重要术语提供中英文对照
+- **缩写定义**: 首次出现时定义缩写
+
+### 3.3 文档语言标识
+```markdown
+---
+language: zh-CN # 或 en-US
+---
+```
+
+## 4. 文档维护规范
+
+### 4.1 文档更新流程
+1. **开发阶段**: 在开发功能时同步编写文档
+2. **代码审查**: 将文档更新作为代码审查的一部分
+3. **发布前**: 确保文档与代码保持一致
+4. **发布后**: 更新相关文档和版本信息
+
+### 4.2 文档审查清单
+- [ ] 文档内容准确完整
+- [ ] 代码示例可运行
+- [ ] 链接和引用有效
+- [ ] 格式符合规范
+- [ ] 术语使用一致
+- [ ] 语言表达清晰
+
+### 4.3 版本控制
+```markdown
+## 版本历史
+
+### v1.0.0 (2024-01-01)
+- 初始版本发布
+- 实现基本功能文档
+
+### v1.1.0 (2024-01-15)
+- 添加新功能文档
+- 更新API文档
+- 修复文档错误
+```
+
+## 5. 自动化工具
+
+### 5.1 文档生成脚本
+```bash
+# 生成API文档
+npm run docs:generate-api
+
+# 生成组件文档
+npm run docs:generate-components
+
+# 生成类型文档
+npm run docs:generate-types
+
+# 检查文档链接
+npm run docs:check-links
+
+# 文档格式检查
+npm run docs:lint
+```
+
+### 5.2 CI/CD集成
+文档构建和部署应集成到CI/CD流程中，确保文档与代码同步更新。
+
+## 6. 最佳实践
+
+### 6.1 文档编写原则
+- **清晰性**: 使用简洁明了的语言
+- **完整性**: 覆盖所有重要功能
+- **一致性**: 使用统一的格式和风格
+- **及时性**: 代码变更时及时更新文档
+- **可访问性**: 确保文档易于搜索和访问
+
+### 6.2 文档结构原则
+- **层次清晰**: 逻辑结构清晰，便于导航
+- **重点突出**: 重要信息突出显示
+- **示例丰富**: 提供充分的使用示例
+- **索引完善**: 提供完整的索引和搜索功能
+
+遵循这些规范将确保文档质量、一致性和可维护性。
 
 ### 2.1 Markdown格式
 

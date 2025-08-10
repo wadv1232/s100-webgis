@@ -1,60 +1,120 @@
+/**
+ * @fileoverview Base Service Class
+ * Abstract base class for all S-100 services
+ * @author Development Team
+ * @since 2024-01-01
+ * @version 1.0.0
+ * @module services/base-service
+ */
+
 import { PrismaClient } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getServiceConfig, renderServiceTemplate } from '@/config/services'
 import { getAppConfig } from '@/config/app'
 
-// 服务配置接口
+/**
+ * Service configuration interface
+ * Defines the structure for service configuration
+ * @interface IServiceConfig
+ */
 export interface IServiceConfig {
+  /** Unique service code identifier */
   serviceCode: string
+  /** Human-readable service name */
   serviceName: string
+  /** Service description */
   serviceDescription: string
+  /** Icon identifier for the service */
   icon: string
+  /** Array of service capabilities */
   capabilities: IServiceCapability[]
 }
 
-// 服务能力接口
+/**
+ * Service capability interface
+ * Defines the structure for individual service capabilities
+ * @interface IServiceCapability
+ */
 export interface IServiceCapability {
+  /** Type of capability (WMS, WFS, WCS, etc.) */
   type: string
+  /** Name of the capability */
   name: string
+  /** Description of what the capability does */
   description: string
+  /** Endpoint URL for the capability */
   endpoint: string
+  /** List of supported parameters */
   supportedParameters: string[]
+  /** List of optional parameters */
   optionalParameters: string[]
 }
 
-// 服务参数接口
+/**
+ * Service parameters interface
+ * Generic interface for service parameters
+ * @interface IServiceParameters
+ */
 export interface IServiceParameters {
   [key: string]: any
 }
 
-// 基础服务接口
+/**
+ * Base service interface
+ * Defines the contract for all S-100 services
+ * @interface IService
+ */
 export interface IService {
-  // 基础CRUD操作
+  /** Find a record by ID */
   findById(id: string): Promise<any>
+  /** Find all records with optional parameters */
   findAll(params?: any): Promise<any[]>
+  /** Create a new record */
   create(data: any): Promise<any>
+  /** Update an existing record */
   update(id: string, data: any): Promise<any>
+  /** Delete a record */
   delete(id: string): Promise<boolean>
 }
 
-// 基础服务类
+/**
+ * Abstract base service class
+ * Provides common functionality for all S-100 services
+ * @class BaseService
+ * @implements {IService}
+ */
 export abstract class BaseService implements IService {
   protected db: PrismaClient = db
   protected modelName: string
   protected config: IServiceConfig
 
+  /**
+   * Create a new BaseService instance
+   * @param {string} modelName - The name of the database model
+   * @param {IServiceConfig} config - Service configuration
+   */
   constructor(modelName: string, config: IServiceConfig) {
     this.modelName = modelName
     this.config = config
   }
 
-  // 获取模型实例
+  /**
+   * Get the database model instance
+   * @protected
+   * @returns {any} The database model instance
+   */
   protected get model() {
     return (this.db as any)[this.modelName]
   }
 
-  // 查找单个记录
+  /**
+   * Find a single record by ID
+   * @param {string} id - The record ID to find
+   * @param {any} include - Optional include parameters for relations
+   * @returns {Promise<any>} The found record or null
+   * @throws {Error} When database operation fails
+   */
   async findById(id: string, include?: any): Promise<any> {
     try {
       return await this.model.findUnique({

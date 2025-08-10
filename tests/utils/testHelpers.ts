@@ -1,32 +1,42 @@
-// 测试辅助函数和工具
+/**
+ * Comprehensive test helpers and utilities for S-100 scenario testing
+ * @author Development Team
+ * @since 2024-01-01
+ * @version 3.0.0
+ */
 
 import { render, RenderOptions } from '@testing-library/react'
 import { ReactElement } from 'react'
 import { jest } from '@jest/globals'
 
-// 自定义渲染函数，包含提供者
+// Import test data and fixtures
+import { testData, mockResponses, testConstants } from '../scenarios/fixtures/testData'
+
+// ===== EXISTING HELPERS (keeping original functionality) =====
+
+// Custom render function with providers
 export function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
 ) {
   return render(ui, {
     ...options,
-    // 这里可以添加需要的提供者，如 ThemeProvider, QueryProvider 等
+    // Here you can add needed providers like ThemeProvider, QueryProvider, etc.
   })
 }
 
-// 等待地图加载完成的辅助函数
+// Wait for map to load helper
 export const waitForMapToLoad = async () => {
-  // 在实际实现中，这里会等待地图容器出现
+  // In actual implementation, this would wait for map container to appear
   return new Promise(resolve => setTimeout(resolve, 100))
 }
 
-// 等待异步操作完成的辅助函数
+// Wait for async operation helper
 export const waitForAsync = () => {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
 
-// 创建模拟的 Leaflet 地图对象
+// Mock Leaflet map object
 export const createMockMap = () => ({
   getContainer: jest.fn(() => ({
     getBoundingClientRect: () => ({
@@ -60,7 +70,7 @@ export const createMockMap = () => ({
   setZoom: jest.fn()
 })
 
-// 创建模拟的 Leaflet 瓦片层
+// Mock Leaflet tile layer
 export const createMockTileLayer = () => ({
   addTo: jest.fn(),
   remove: jest.fn(),
@@ -74,7 +84,7 @@ export const createMockTileLayer = () => ({
   redraw: jest.fn()
 })
 
-// 创建模拟的 Leaflet 标记
+// Mock Leaflet marker
 export const createMockMarker = () => ({
   addTo: jest.fn(),
   remove: jest.fn(),
@@ -88,7 +98,7 @@ export const createMockMarker = () => ({
   getPopup: jest.fn()
 })
 
-// 创建模拟的 Leaflet 弹出窗口
+// Mock Leaflet popup
 export const createMockPopup = () => ({
   setContent: jest.fn(),
   setLatLng: jest.fn(),
@@ -98,7 +108,7 @@ export const createMockPopup = () => ({
   remove: jest.fn()
 })
 
-// 模拟 ResizeObserver
+// Mock ResizeObserver
 export const createMockResizeObserver = () => {
   return class ResizeObserver {
     observe = jest.fn()
@@ -107,7 +117,7 @@ export const createMockResizeObserver = () => {
   }
 }
 
-// 模拟 IntersectionObserver
+// Mock IntersectionObserver
 export const createMockIntersectionObserver = () => {
   return class IntersectionObserver {
     constructor(callback: IntersectionObserverCallback) {}
@@ -117,13 +127,13 @@ export const createMockIntersectionObserver = () => {
   }
 }
 
-// 生成随机测试数据
+// Generate random test data
 export const generateRandomCoordinate = () => ({
   lat: Math.random() * 180 - 90,
   lng: Math.random() * 360 - 180
 })
 
-// 生成随机节点数据
+// Generate random node data
 export const generateRandomNode = () => ({
   id: `node-${Math.random().toString(36).substr(2, 9)}`,
   name: `Node ${Math.floor(Math.random() * 1000)}`,
@@ -137,7 +147,7 @@ export const generateRandomNode = () => ({
   location: generateRandomCoordinate()
 })
 
-// 生成随机服务数据
+// Generate random service data
 export const generateRandomService = () => ({
   id: `service-${Math.random().toString(36).substr(2, 9)}`,
   name: `Service ${Math.floor(Math.random() * 1000)}`,
@@ -150,26 +160,26 @@ export const generateRandomService = () => ({
   nodeId: `node-${Math.random().toString(36).substr(2, 9)}`
 })
 
-// 深度比较两个对象是否相等
+// Deep comparison helper
 export const deepEqual = (obj1: any, obj2: any): boolean => {
   return JSON.stringify(obj1) === JSON.stringify(obj2)
 }
 
-// 模拟 API 响应延迟
+// Simulate API response delay
 export const simulateApiDelay = (response: any, delay: number = 100) => {
   return new Promise(resolve => {
     setTimeout(() => resolve(response), delay)
   })
 }
 
-// 模拟 API 错误
+// Simulate API error
 export const simulateApiError = (error: any, delay: number = 100) => {
   return new Promise((_, reject) => {
     setTimeout(() => reject(error), delay)
   })
 }
 
-// 创建模拟的 fetch 函数
+// Create mock fetch function
 export const createMockFetch = (responses: Record<string, any>) => {
   return jest.fn().mockImplementation((url: string) => {
     const response = responses[url]
@@ -184,7 +194,7 @@ export const createMockFetch = (responses: Record<string, any>) => {
   })
 }
 
-// 验证坐标标准化
+// Coordinate normalization validation
 export const validateCoordinateNormalization = (lat: number, lng: number) => {
   const normalizedLat = Math.max(-90, Math.min(90, lat))
   const normalizedLng = ((lng % 360) + 360) % 360
@@ -197,7 +207,7 @@ export const validateCoordinateNormalization = (lat: number, lng: number) => {
   }
 }
 
-// 模拟用户交互事件
+// Simulate user interaction events
 export const simulateUserInteraction = {
   click: (element: HTMLElement) => {
     element.click()
@@ -220,7 +230,7 @@ export const simulateUserInteraction = {
   }
 }
 
-// 测试用例装饰器
+// Test case decorators
 export const describeWithTimeout = (timeout: number) => {
   return (description: string, testFn: () => void) => {
     describe(description, () => {
@@ -233,7 +243,7 @@ export const describeWithTimeout = (timeout: number) => {
   }
 }
 
-// 测试用例重试装饰器
+// Test case retry decorator
 export const itWithRetry = (retries: number) => {
   return (description: string, testFn: () => Promise<void>) => {
     it(description, async () => {
@@ -254,7 +264,7 @@ export const itWithRetry = (retries: number) => {
   }
 }
 
-// 性能测试辅助函数
+// Performance testing helper
 export const measurePerformance = (fn: () => void, iterations: number = 1000) => {
   const start = performance.now()
   
@@ -270,7 +280,7 @@ export const measurePerformance = (fn: () => void, iterations: number = 1000) =>
   }
 }
 
-// 内存使用测试辅助函数
+// Memory usage testing helper
 export const measureMemoryUsage = () => {
   if (typeof process !== 'undefined' && process.memoryUsage) {
     return process.memoryUsage()
@@ -283,15 +293,15 @@ export const measureMemoryUsage = () => {
   return null
 }
 
-// 清理所有模拟
+// Clear all mocks
 export const clearAllMocks = () => {
   jest.clearAllMocks()
   jest.clearAllTimers()
 }
 
-// 设置全局测试环境
+// Setup global test environment
 export const setupTestEnvironment = () => {
-  // 模拟 window 对象
+  // Mock window object
   Object.defineProperty(window, 'ResizeObserver', {
     value: createMockResizeObserver(),
     writable: true
@@ -302,7 +312,7 @@ export const setupTestEnvironment = () => {
     writable: true
   })
   
-  // 模拟 matchMedia
+  // Mock matchMedia
   Object.defineProperty(window, 'matchMedia', {
     value: jest.fn().mockImplementation(query => ({
       matches: false,
@@ -317,18 +327,570 @@ export const setupTestEnvironment = () => {
     writable: true
   })
   
-  // 模拟 scrollTo
+  // Mock scrollTo
   Object.defineProperty(window, 'scrollTo', {
     value: jest.fn(),
     writable: true
   })
 }
 
-// 清理测试环境
+// Cleanup test environment
 export const cleanupTestEnvironment = () => {
   clearAllMocks()
   jest.useRealTimers()
 }
 
-// 导出所有工具函数
-export * from './mockData'
+// ===== NEW SCENARIO TESTING HELPERS =====
+
+// Base test helper class for API testing
+export class ApiTestHelper {
+  protected baseUrl: string;
+  protected headers: Record<string, string>;
+
+  constructor(baseUrl: string = testConstants.urls.apiBase) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Content-Type': testConstants.headers.contentType,
+      'Authorization': testConstants.headers.authorization,
+      'API-Version': testConstants.headers.apiVersion
+    };
+  }
+
+  // Generic HTTP request methods
+  async get(endpoint: string, params?: Record<string, any>): Promise<any> {
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined) {
+          url.searchParams.append(key, params[key]);
+        }
+      });
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: this.headers
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async post(endpoint: string, data: any): Promise<any> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(data)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async put(endpoint: string, data: any): Promise<any> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(data)
+    });
+
+    return this.handleResponse(response);
+  }
+
+  async delete(endpoint: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'DELETE',
+      headers: this.headers
+    });
+
+    return this.handleResponse(response);
+  }
+
+  protected async handleResponse(response: Response): Promise<any> {
+    const data = await response.json().catch(() => ({}));
+    
+    return {
+      status: response.status,
+      data: data,
+      headers: Object.fromEntries(response.headers.entries()),
+      ok: response.ok
+    };
+  }
+
+  // Utility methods
+  async waitFor(condition: () => boolean, timeout: number = testConstants.timeouts.medium): Promise<boolean> {
+    const start = Date.now();
+    
+    while (Date.now() - start < timeout) {
+      if (condition()) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return false;
+  }
+
+  async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+// Dataset Publication Tester (Story #1)
+export class DatasetPublicationTester extends ApiTestHelper {
+  constructor() {
+    super(testConstants.urls.apiBase);
+  }
+
+  async uploadDataset(dataset: any): Promise<any> {
+    return this.post('/datasets', dataset);
+  }
+
+  async publishDataset(datasetId: string): Promise<any> {
+    return this.post(`/datasets/${datasetId}/publish`, {});
+  }
+
+  async validateDataset(datasetId: string): Promise<any> {
+    return this.get(`/datasets/${datasetId}/validate`);
+  }
+
+  async getServiceEndpoints(datasetId: string): Promise<any> {
+    return this.get(`/datasets/${datasetId}/services`);
+  }
+
+  async testServiceEndpoint(endpoint: string): Promise<any> {
+    try {
+      const response = await fetch(endpoint);
+      return {
+        status: response.status,
+        ok: response.ok
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        ok: false,
+        error: error.message
+      };
+    }
+  }
+
+  async createValidDataset(): Promise<string> {
+    const response = await this.uploadDataset(testData.validS102Dataset);
+    return response.data.datasetId;
+  }
+
+  async publishAndGetEndpoints(): Promise<any> {
+    const datasetId = await this.createValidDataset();
+    await this.publishDataset(datasetId);
+    return this.getServiceEndpoints(datasetId);
+  }
+}
+
+// Atomic Service Update Tester (Story #2)
+export class AtomicServiceUpdateTester extends ApiTestHelper {
+  constructor() {
+    super(testConstants.urls.apiBase);
+  }
+
+  async updateService(serviceId: string, updateData: any): Promise<any> {
+    return this.put(`/services/${serviceId}`, updateData);
+  }
+
+  async createActiveService(): Promise<string> {
+    const service = await this.post('/services', testData.serviceUpdateData.existingService);
+    return service.data.serviceId;
+  }
+
+  async checkServiceContinuity(serviceId: string): Promise<any> {
+    return this.get(`/services/${serviceId}/continuity`);
+  }
+
+  async getCurrentVersion(serviceId: string): Promise<string> {
+    const response = await this.get(`/services/${serviceId}`);
+    return response.data.version;
+  }
+
+  async attemptInvalidUpdate(serviceId: string): Promise<any> {
+    const invalidUpdate = {
+      version: 'invalid-version',
+      filename: 'invalid_file.txt'
+    };
+    return this.updateService(serviceId, invalidUpdate);
+  }
+
+  async rollbackService(serviceId: string): Promise<any> {
+    return this.post(`/services/${serviceId}/rollback`, {});
+  }
+}
+
+// Service Retirement Tester (Story #3)
+export class ServiceRetirementTester extends ApiTestHelper {
+  constructor() {
+    super(testConstants.urls.apiBase);
+  }
+
+  async retireService(serviceId: string, reason: string): Promise<any> {
+    return this.post(`/services/${serviceId}/retire`, { reason });
+  }
+
+  async archiveService(serviceId: string): Promise<any> {
+    return this.post(`/services/${serviceId}/archive`, {});
+  }
+
+  async getServiceHistory(serviceId: string): Promise<any> {
+    return this.get(`/services/${serviceId}/history`);
+  }
+
+  async isServiceAvailable(serviceId: string): Promise<boolean> {
+    const response = await this.get(`/services/${serviceId}/status`);
+    return response.data.status === 'active';
+  }
+
+  async getArchivedServices(): Promise<any> {
+    return this.get('/services/archived');
+  }
+}
+
+// Regional Dashboard Tester (Story #6)
+export class RegionalDashboardTester extends ApiTestHelper {
+  constructor() {
+    super(testConstants.urls.baseUrl);
+  }
+
+  async getRegionalDashboard(): Promise<any> {
+    return this.get('/regional/dashboard');
+  }
+
+  async getRealTimeHealth(): Promise<any> {
+    return this.get('/regional/health');
+  }
+
+  async getNodeMapData(): Promise<any> {
+    return this.get('/regional/nodes/map');
+  }
+
+  async getServiceCoverage(): Promise<any> {
+    return this.get('/regional/coverage');
+  }
+
+  async simulateCriticalFailure(): Promise<any> {
+    const nodeId = 'qingdao-port';
+    return this.post(`/regional/nodes/${nodeId}/simulate-failure`, {});
+  }
+
+  async checkAlertTriggered(failureScenario: any): Promise<any> {
+    return this.get('/regional/alerts/latest');
+  }
+
+  async createRegionalNodes(nodes: any[]): Promise<any> {
+    return this.post('/regional/nodes/batch', { nodes });
+  }
+
+  async setupNodeHealthScenarios(): Promise<any> {
+    return this.post('/regional/nodes/health-scenarios', {});
+  }
+}
+
+// Federation Governance Tester (Story #11)
+export class FederationGovernanceTester extends ApiTestHelper {
+  constructor() {
+    super(testConstants.urls.apiBase);
+  }
+
+  async registerNationalNode(nodeData: any): Promise<any> {
+    return this.post('/admin/federation/nodes', nodeData);
+  }
+
+  async validateApiCompliance(apiData: any): Promise<any> {
+    return this.post('/admin/federation/validate-api', apiData);
+  }
+
+  async integrateToNetwork(nodeId: string): Promise<any> {
+    return this.post(`/admin/federation/nodes/${nodeId}/integrate`, {});
+  }
+
+  async getFederationMembers(): Promise<any> {
+    return this.get('/admin/federation/members');
+  }
+
+  async getGlobalTopology(): Promise<any> {
+    return this.get('/admin/federation/topology');
+  }
+
+  async suspendNode(nodeId: string, reason: string): Promise<any> {
+    return this.post(`/admin/federation/nodes/${nodeId}/suspend`, { reason });
+  }
+}
+
+// Performance testing utilities
+export class PerformanceTester extends ApiTestHelper {
+  async runLoadTest(config: any): Promise<any> {
+    return this.post('/test/load', config);
+  }
+
+  async runStressTest(config: any): Promise<any> {
+    return this.post('/test/stress', config);
+  }
+
+  async getPerformanceMetrics(): Promise<any> {
+    return this.get('/test/metrics');
+  }
+
+  async generatePerformanceReport(): Promise<any> {
+    return this.get('/test/report');
+  }
+
+  async monitorPerformance(duration: number): Promise<any> {
+    return this.post('/test/monitor', { duration });
+  }
+}
+
+// Security testing utilities
+export class SecurityTester extends ApiTestHelper {
+  async testAuthentication(credentials: any): Promise<any> {
+    return this.post('/auth/test', credentials);
+  }
+
+  async testAuthorization(token: string, resource: string): Promise<any> {
+    return this.post('/auth/authorize', { token, resource });
+  }
+
+  async testDataEncryption(data: any): Promise<any> {
+    return this.post('/security/encrypt', { data });
+  }
+
+  async testVulnerabilityScan(): Promise<any> {
+    return this.get('/security/vulnerability-scan');
+  }
+
+  async testAuditTrail(): Promise<any> {
+    return this.get('/security/audit-trail');
+  }
+
+  async testComplianceCheck(): Promise<any> {
+    return this.get('/security/compliance');
+  }
+}
+
+// Mock server utilities for testing
+export class MockServer {
+  private responses: Map<string, any> = new Map();
+  private delays: Map<string, number> = new Map();
+
+  constructor() {
+    this.setupDefaultResponses();
+  }
+
+  private setupDefaultResponses(): void {
+    this.responses.set('/api/capabilities', mockResponses.capabilitiesResponse);
+    this.responses.set('/api/health', mockResponses.healthStatusResponse);
+    this.responses.set('/api/datasets', mockResponses.validationResponse);
+    this.responses.set('/api/services', mockResponses.serviceCreationResponse);
+  }
+
+  setResponse(path: string, response: any): void {
+    this.responses.set(path, response);
+  }
+
+  setDelay(path: string, delayMs: number): void {
+    this.delays.set(path, delayMs);
+  }
+
+  async simulateRequest(path: string, options: any = {}): Promise<any> {
+    const response = this.responses.get(path);
+    const delay = this.delays.get(path) || 0;
+
+    if (delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    if (response) {
+      return Promise.resolve(response);
+    }
+
+    return Promise.resolve({
+      status: 404,
+      data: { error: 'Not found' }
+    });
+  }
+
+  reset(): void {
+    this.responses.clear();
+    this.delays.clear();
+    this.setupDefaultResponses();
+  }
+}
+
+// Enhanced assertion helpers
+export class AssertionHelpers {
+  static assertSuccess(response: any): void {
+    expect(response.status).toBe(200);
+    expect(response.data.success).toBe(true);
+  }
+
+  static assertCreated(response: any): void {
+    expect(response.status).toBe(201);
+    expect(response.data.id).toBeDefined();
+  }
+
+  static assertError(response: any, expectedStatus: number = 500): void {
+    expect(response.status).toBe(expectedStatus);
+    expect(response.data.error).toBeDefined();
+  }
+
+  static assertContains(expected: any, actual: any): void {
+    expect(actual).toEqual(expect.objectContaining(expected));
+  }
+
+  static assertPerformance(response: any, thresholds: any): void {
+    expect(response.data.responseTime).toBeLessThan(thresholds.responseTime);
+    expect(response.data.throughput).toBeGreaterThan(thresholds.throughput);
+    expect(response.data.errorRate).toBeLessThan(thresholds.errorRate);
+  }
+
+  static assertSecurityCompliance(response: any, requirements: any): void {
+    expect(response.data.authentication).toBe(requirements.authentication);
+    expect(response.data.authorization).toBe(requirements.authorization);
+    expect(response.data.encryption).toBe(requirements.encryption);
+  }
+
+  static assertCompliancePolicy(response: any, policy: any): void {
+    expect(response.data.policyApplied).toBe(true);
+    expect(response.data.compliantNodes).toBeDefined();
+    expect(response.data.nonCompliantNodes).toBeDefined();
+  }
+
+  static assertServiceAvailability(response: any, serviceId: string): void {
+    expect(response.data.services[serviceId]).toBeDefined();
+    expect(response.data.services[serviceId].status).toMatch(/active|warning|error/);
+  }
+
+  static assertFederationIntegration(response: any): void {
+    expect(response.data.integrated).toBe(true);
+    expect(response.data.apiKey).toBeDefined();
+    expect(response.data.visibleInTopology).toBe(true);
+  }
+}
+
+// Test data generators for specific scenarios
+export class TestDataGenerators {
+  static generateDatasetPublicationData(): any {
+    return {
+      filename: `s102_bathymetry_${Date.now()}.h5`,
+      size: 1024 * 1024 * 100,
+      checksum: 'sha256:' + Math.random().toString(36).substring(7),
+      productType: 'S-102',
+      version: '1.0.0',
+      metadata: {
+        coverage: {
+          type: 'Polygon',
+          coordinates: [[[121.0, 31.0], [122.0, 31.0], [122.0, 32.0], [121.0, 32.0], [121.0, 31.0]]]
+        },
+        resolution: '1m',
+        accuracy: '0.5m',
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
+  static generateServiceUpdateData(): any {
+    return {
+      existingService: {
+        id: 's101-navigation-v1',
+        name: 'S-101 Navigation Chart v1.0',
+        productType: 'S-101',
+        version: '1.0.0',
+        status: 'active'
+      },
+      newVersion: {
+        version: '2.0.0',
+        filename: 's101_navigation_v2.h5',
+        changes: ['Updated depth contours', 'Added new hazards', 'Improved accuracy']
+      }
+    };
+  }
+
+  static generateNodeHierarchyData(): any {
+    return {
+      root: { 
+        id: 'global-root', 
+        name: 'IHO Global Node',
+        type: 'GLOBAL_ROOT',
+        level: 0
+      },
+      national: [
+        { 
+          id: 'china-node', 
+          name: 'China National Node',
+          type: 'NATIONAL',
+          level: 1,
+          parentId: 'global-root'
+        }
+      ],
+      regional: [
+        { 
+          id: 'east-china', 
+          name: 'East China Regional Node',
+          type: 'REGIONAL',
+          level: 2,
+          parentId: 'china-node'
+        }
+      ]
+    };
+  }
+
+  static generateExperimentalServiceData(): any {
+    return {
+      id: 'x-mpa-berth-status',
+      name: 'MPA Berth Status Service',
+      productType: 'X-MPA-BerthStatus',
+      status: 'experimental',
+      description: 'Real-time berth availability and status information',
+      dataModel: 'custom',
+      version: '0.1.0',
+      provider: 'Singapore MPA',
+      accessControl: 'restricted'
+    };
+  }
+}
+
+// Export all helpers for easy use
+export {
+  // Original helpers
+  renderWithProviders,
+  waitForMapToLoad,
+  waitForAsync,
+  createMockMap,
+  createMockTileLayer,
+  createMockMarker,
+  createMockPopup,
+  createMockResizeObserver,
+  createMockIntersectionObserver,
+  generateRandomCoordinate,
+  generateRandomNode,
+  generateRandomService,
+  deepEqual,
+  simulateApiDelay,
+  simulateApiError,
+  createMockFetch,
+  validateCoordinateNormalization,
+  simulateUserInteraction,
+  describeWithTimeout,
+  itWithRetry,
+  measurePerformance,
+  measureMemoryUsage,
+  clearAllMocks,
+  setupTestEnvironment,
+  cleanupTestEnvironment,
+  
+  // New scenario testing helpers
+  ApiTestHelper,
+  DatasetPublicationTester,
+  AtomicServiceUpdateTester,
+  ServiceRetirementTester,
+  RegionalDashboardTester,
+  FederationGovernanceTester,
+  PerformanceTester,
+  SecurityTester,
+  MockServer,
+  AssertionHelpers,
+  TestDataGenerators
+};

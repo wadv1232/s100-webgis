@@ -1,3 +1,12 @@
+/**
+ * @fileoverview S-100 Service Map Component
+ * Main map component for displaying maritime services and nodes
+ * @author Development Team
+ * @since 2024-01-01
+ * @version 1.0.0
+ * @module components/S100ServiceMap
+ */
+
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -85,14 +94,26 @@ interface MapLayer {
   color: string
 }
 
+/**
+ * Properties for the S100ServiceMap component
+ * @interface S100ServiceMapProps
+ */
 interface S100ServiceMapProps {
+  /** Array of nodes to display on the map */
   nodes: NodeType[]
+  /** Array of services to display on the map */
   services: ServiceType[]
+  /** Currently selected node */
   selectedNode: NodeType
+  /** Callback function when a node is selected */
   onNodeSelect: (node: NodeType) => void
+  /** Optional callback function when a node is updated */
   onNodeUpdate?: (nodeId: string, updates: Partial<NodeType>) => void
+  /** Whether the map is in editable mode */
   editable?: boolean
+  /** Height of the map container */
   height?: string
+  /** Base map configuration */
   baseMapConfig?: {
     type: 'osm' | 'satellite' | 'terrain' | 'custom'
     customUrl?: string
@@ -111,6 +132,22 @@ interface S100ServiceMapProps {
   }
 }
 
+/**
+ * S-100 Service Map Component
+ * Main map component for displaying maritime services and nodes with interactive features
+ * @component S100ServiceMap
+ * @example
+ * ```tsx
+ * <S100ServiceMap 
+ *   nodes={nodes}
+ *   services={services}
+ *   selectedNode={selectedNode}
+ *   onNodeSelect={handleNodeSelect}
+ *   editable={true}
+ *   height="600px"
+ * />
+ * ```
+ */
 export default function S100ServiceMap({ 
   nodes, 
   services, 

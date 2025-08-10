@@ -1,8 +1,27 @@
+/**
+ * @fileoverview Nodes API Routes
+ * RESTful API endpoints for managing nodes in the S-100 WebGIS system
+ * @author Development Team
+ * @since 2024-01-01
+ * @version 1.0.0
+ * @module api/nodes
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { nodeService } from '@/lib/services/node-service'
 import { handleError, formatErrorResponse, logError } from '@/lib/utils/errors'
 
-// GET /api/nodes - Get all nodes
+/**
+ * GET /api/nodes - Get all nodes with pagination and filtering
+ * Retrieves a paginated list of nodes with optional filtering by type, level, and other parameters
+ * @param {NextRequest} request - The incoming HTTP request
+ * @returns {Promise<NextResponse>} JSON response with nodes data or error
+ * 
+ * @example
+ * ```bash
+ * GET /api/nodes?page=1&limit=10&type=maritime&level=1
+ * ```
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -73,7 +92,26 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/nodes - Create new node
+/**
+ * POST /api/nodes - Create new node
+ * Creates a new node in the system with the provided data
+ * @param {NextRequest} request - The incoming HTTP request with node data in body
+ * @returns {Promise<NextResponse>} JSON response with created node data or error
+ * 
+ * @example
+ * ```bash
+ * POST /api/nodes
+ * Content-Type: application/json
+ * 
+ * {
+ *   "code": "NODE001",
+ *   "name": "Test Node",
+ *   "type": "maritime",
+ *   "level": 1,
+ *   "description": "Test node description"
+ * }
+ * ```
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
