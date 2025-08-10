@@ -284,7 +284,7 @@ export default function Home() {
           title: '节点管理',
           description: '管理网络节点和层级结构',
           icon: Settings,
-          href: '/node-management',
+          href: '/nodes',
           color: 'orange'
         },
         {
@@ -300,7 +300,7 @@ export default function Home() {
           title: '区域管理',
           description: '管理区域内节点和数据服务',
           icon: Map,
-          href: '/node-management',
+          href: '/nodes',
           color: 'orange'
         },
         {
