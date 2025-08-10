@@ -123,6 +123,7 @@ export interface SharedMapProps {
 
 export interface SharedMapRef {
   previewService: (service: ServiceType) => void
+  startEditing: (node: NodeType) => void
   fitBounds: (bounds: any) => void
   getCenter: () => { lat: number; lng: number }
   setCenter: (center: [number, number]) => void
@@ -180,9 +181,17 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
   // 新增状态：服务详情
   const [currentPreviewService, setCurrentPreviewService] = useState<ServiceType | null>(null)
   
+  // 新增状态：绘制功能
+  const [drawControl, setDrawControl] = useState<any>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [drawMode, setDrawMode] = useState<'polygon' | 'rectangle' | 'marker'>('polygon')
+  const [drawPoints, setDrawPoints] = useState<[number, number][]>([])
+  const [tempLayer, setTempLayer] = useState<any>(null)
+  
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
+  const drawControlRef = useRef<any>(null)
 
   // Update base layer when baseMapConfig changes
   useEffect(() => {
@@ -195,6 +204,9 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
   useImperativeHandle(ref, () => ({
     previewService: (service: ServiceType) => {
       handlePreviewOnMap(service)
+    },
+    startEditing: (node: NodeType) => {
+      startEditing(node)
     },
     fitBounds: (bounds: any) => {
       if (mapRef.current) {
@@ -382,6 +394,11 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     // 监听地图点击事件
     map.on('click', (e: any) => {
       console.log('Map clicked at:', e.latlng)
+      
+      // 如果在编辑模式下，处理地图点击以设置位置
+      if (mode === 'edit' && editable && editingNode) {
+        handleMapClick(e)
+      }
     })
 
     // 监听地图加载事件
@@ -479,14 +496,58 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
 
   // Start editing node geometry
   const startEditing = (node: NodeType) => {
+    console.log('Starting edit for node:', node.name)
     setEditingNode(node)
     setEditMode('manual')
+    
+    // 确保地图已加载
+    if (!isMapLoaded || !mapRef.current) {
+      console.warn('Map not loaded yet, delaying edit start')
+      setTimeout(() => startEditing(node), 500)
+      return
+    }
+    
+    // 初始化绘制控件
+    if (!drawControlRef.current) {
+      initializeDrawControl()
+    }
+    
+    // 调整地图视图到节点位置
+    if (node.location) {
+      mapRef.current.setView([node.location.lat, node.location.lng], 10)
+      console.log('Map view set to node location:', node.location)
+    }
     
     if (node.coverage) {
       setCoverage(node.coverage)
       try {
         const geometry = parseGeoJSON(node.coverage)
         setTempGeometry(geometry)
+        
+        // 在地图上显示当前几何图形
+        if (mapRef.current && geometry) {
+          // 清除之前的编辑图层
+          mapRef.current.eachLayer((layer: any) => {
+            if (layer.options && layer.options.isEditLayer) {
+              mapRef.current.removeLayer(layer)
+            }
+          })
+          
+          // 添加新的几何图形
+          const editLayer = L.geoJSON(geometry as any, {
+            style: {
+              color: '#ef4444',
+              weight: 3,
+              fillColor: '#ef4444',
+              fillOpacity: 0.2,
+              isEditLayer: true
+            }
+          }).addTo(mapRef.current)
+          
+          // 调整地图视图到几何图形范围
+          mapRef.current.fitBounds(editLayer.getBounds())
+          console.log('Geometry displayed on map')
+        }
         
         // 计算中心点
         const center = calculateCenter(geometry)
@@ -504,19 +565,53 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
       setTempGeometry(defaultCoverage)
       setLatitude(node.location.lat.toString())
       setLongitude(node.location.lng.toString())
+      
+      // 在地图上显示默认几何图形
+      if (mapRef.current && defaultCoverage) {
+        const editLayer = L.geoJSON(defaultCoverage as any, {
+          style: {
+            color: '#ef4444',
+            weight: 3,
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            isEditLayer: true
+          }
+        }).addTo(mapRef.current)
+        
+        mapRef.current.fitBounds(editLayer.getBounds())
+      }
     }
     
     setValidation({ valid: true })
+    console.log('Edit mode started successfully')
   }
 
   // Cancel editing
   const cancelEdit = () => {
+    console.log('Canceling edit mode')
+    
+    // 停止绘制模式
+    if (isDrawing) {
+      stopDrawing()
+    }
+    
+    // 清理地图上的编辑图层
+    if (mapRef.current) {
+      mapRef.current.eachLayer((layer: any) => {
+        if (layer.options && layer.options.isEditLayer) {
+          mapRef.current.removeLayer(layer)
+        }
+      })
+      console.log('Edit layers cleared from map')
+    }
+    
     setEditingNode(null)
     setTempGeometry(null)
     setCoverage('')
     setLatitude('')
     setLongitude('')
     setValidation({ valid: true })
+    console.log('Edit mode canceled')
   }
 
   // Save edited geometry
@@ -547,6 +642,394 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
     }
   }
 
+  // 初始化绘制控件
+  const initializeDrawControl = () => {
+    console.log('Draw control initialized (simplified version)')
+    // 不使用leaflet-draw，而是使用自定义的绘制逻辑
+  }
+
+  // 开始绘制
+  const startDrawing = (mode: 'polygon' | 'rectangle' | 'marker' = 'polygon') => {
+    if (!mapRef.current || !isMapLoaded) return
+
+    setDrawMode(mode)
+    setIsDrawing(true)
+    setDrawPoints([])
+    
+    // 清除之前的临时图层
+    if (tempLayer) {
+      mapRef.current.removeLayer(tempLayer)
+      setTempLayer(null)
+    }
+
+    console.log('Started drawing mode:', mode)
+  }
+
+  // 停止绘制
+  const stopDrawing = () => {
+    setIsDrawing(false)
+    setDrawPoints([])
+    
+    // 清除临时图层
+    if (tempLayer && mapRef.current) {
+      mapRef.current.removeLayer(tempLayer)
+      setTempLayer(null)
+    }
+
+    console.log('Stopped drawing mode')
+  }
+
+  // 完成绘制
+  const finishDrawing = () => {
+    if (!mapRef.current || drawPoints.length === 0) return
+
+    let geometry: GeoJSONGeometry | null = null
+
+    if (drawMode === 'marker' && drawPoints.length === 1) {
+      const [lng, lat] = drawPoints[0]
+      geometry = {
+        type: 'Point',
+        coordinates: [lng, lat]
+      }
+      
+      // 更新位置坐标
+      setLatitude(lat.toString())
+      setLongitude(lng.toString())
+    } else if (drawMode === 'polygon' && drawPoints.length >= 3) {
+      // 闭合多边形
+      const coordinates = [...drawPoints, drawPoints[0]]
+      geometry = {
+        type: 'Polygon',
+        coordinates: [coordinates]
+      }
+    } else if (drawMode === 'rectangle' && drawPoints.length === 2) {
+      const [lng1, lat1] = drawPoints[0]
+      const [lng2, lat2] = drawPoints[1]
+      
+      // 创建矩形坐标
+      const coordinates = [
+        [lng1, lat1],
+        [lng2, lat1],
+        [lng2, lat2],
+        [lng1, lat2],
+        [lng1, lat1]
+      ]
+      geometry = {
+        type: 'Polygon',
+        coordinates: [coordinates]
+      }
+    }
+
+    if (geometry) {
+      setTempGeometry(geometry)
+      setCoverage(stringifyGeoJSON(geometry))
+      
+      // 如果不是点，计算中心点
+      if (drawMode !== 'marker') {
+        const center = calculateCenter(geometry)
+        if (center) {
+          setLatitude(center.lat.toString())
+          setLongitude(center.lng.toString())
+        }
+      }
+
+      // 自动保存几何图形
+      if (editingNode && onGeometryUpdate) {
+        onGeometryUpdate(editingNode.id, geometry)
+      }
+    }
+
+    stopDrawing()
+  }
+
+  // 处理绘制创建事件
+  const handleDrawCreated = (e: any) => {
+    const layer = e.layer
+    const type = e.layerType
+
+    console.log('Draw created:', type, layer)
+
+    // 清除之前的编辑图层
+    if (mapRef.current) {
+      mapRef.current.eachLayer((layer: any) => {
+        if (layer.options && layer.options.isEditLayer) {
+          mapRef.current.removeLayer(layer)
+        }
+      })
+    }
+
+    // 标记为编辑图层
+    layer.options.isEditLayer = true
+
+    // 根据绘制类型生成GeoJSON
+    let geometry: GeoJSONGeometry | null = null
+
+    if (type === 'polygon') {
+      const latlngs = layer.getLatLngs()[0]
+      const coordinates = latlngs.map((latlng: any) => [latlng.lng, latlng.lat])
+      // 闭合多边形
+      coordinates.push(coordinates[0])
+      
+      geometry = {
+        type: 'Polygon',
+        coordinates: [coordinates]
+      }
+    } else if (type === 'rectangle') {
+      const bounds = layer.getBounds()
+      const sw = bounds.getSouthWest()
+      const ne = bounds.getNorthEast()
+      
+      geometry = {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [sw.lng, sw.lat],
+            [ne.lng, sw.lat],
+            [ne.lng, ne.lat],
+            [sw.lng, ne.lat],
+            [sw.lng, sw.lat]
+          ]
+        ]
+      }
+    } else if (type === 'marker') {
+      const latlng = layer.getLatLng()
+      
+      geometry = {
+        type: 'Point',
+        coordinates: [latlng.lng, latlng.lat]
+      }
+      
+      // 更新位置坐标
+      setLatitude(latlng.lat.toString())
+      setLongitude(latlng.lng.toString())
+    }
+
+    if (geometry) {
+      setTempGeometry(geometry)
+      setCoverage(stringifyGeoJSON(geometry))
+      
+      // 如果是点，不需要计算中心点，直接使用点的坐标
+      if (type !== 'marker') {
+        // 计算中心点
+        const center = calculateCenter(geometry)
+        if (center) {
+          setLatitude(center.lat.toString())
+          setLongitude(center.lng.toString())
+        }
+      }
+
+      // 自动保存几何图形
+      if (editingNode && onGeometryUpdate) {
+        onGeometryUpdate(editingNode.id, geometry)
+      }
+    }
+
+    // 退出绘制模式
+    stopDrawing()
+  }
+
+  // 处理绘制编辑事件
+  const handleDrawEdited = (e: any) => {
+    const layers = e.layers
+    layers.eachLayer((layer: any) => {
+      console.log('Layer edited:', layer)
+      
+      // 将编辑后的图层转换为GeoJSON
+      const geojson = layer.toGeoJSON()
+      if (geojson && geojson.geometry) {
+        const geometry = geojson.geometry as GeoJSONGeometry
+        setTempGeometry(geometry)
+        setCoverage(stringifyGeoJSON(geometry))
+        
+        // 计算中心点
+        const center = calculateCenter(geometry)
+        if (center) {
+          setLatitude(center.lat.toString())
+          setLongitude(center.lng.toString())
+        }
+
+        // 自动保存几何图形
+        if (editingNode && onGeometryUpdate) {
+          onGeometryUpdate(editingNode.id, geometry)
+        }
+      }
+    })
+  }
+
+  // 处理绘制删除事件
+  const handleDrawDeleted = (e: any) => {
+    console.log('Draw deleted:', e)
+    setTempGeometry(null)
+    setCoverage('')
+    setLatitude('')
+    setLongitude('')
+  }
+
+  // 开始绘制
+  const startDrawing = (mode: 'polygon' | 'rectangle' | 'marker' = 'polygon') => {
+    if (!mapRef.current || !drawControlRef.current) return
+
+    setDrawMode(mode)
+    setIsDrawing(true)
+
+    // 添加绘制控件到地图
+    drawControlRef.current.addTo(mapRef.current)
+
+    // 根据模式启用相应的绘制工具
+    setTimeout(() => {
+      if (mode === 'polygon') {
+        // 查找并点击多边形绘制按钮
+        const polygonButton = document.querySelector('.leaflet-draw-draw-polygon') as HTMLElement
+        if (polygonButton) {
+          polygonButton.click()
+        }
+      } else if (mode === 'rectangle') {
+        // 查找并点击矩形绘制按钮
+        const rectangleButton = document.querySelector('.leaflet-draw-draw-rectangle') as HTMLElement
+        if (rectangleButton) {
+          rectangleButton.click()
+        }
+      } else if (mode === 'marker') {
+        // 查找并点击标记绘制按钮
+        const markerButton = document.querySelector('.leaflet-draw-draw-marker') as HTMLElement
+        if (markerButton) {
+          markerButton.click()
+        }
+      }
+    }, 100)
+
+    console.log('Started drawing mode:', mode)
+  }
+
+  // 停止绘制
+  const stopDrawing = () => {
+    if (!mapRef.current || !drawControlRef.current) return
+
+    setIsDrawing(false)
+    
+    // 从地图移除绘制控件
+    try {
+      mapRef.current.removeControl(drawControlRef.current)
+    } catch (error) {
+      console.warn('Error removing draw control:', error)
+    }
+
+    console.log('Stopped drawing mode')
+  }
+
+  // 处理地图点击设置位置
+  const handleMapClick = (e: any) => {
+    if (!editingNode || !isMapLoaded) return
+
+    const lat = e.latlng.lat
+    const lng = e.latlng.lng
+
+    console.log('Map clicked at:', lat, lng)
+
+    // 如果在绘制模式下，添加绘制点
+    if (isDrawing) {
+      const newPoint: [number, number] = [lng, lat]
+      const newPoints = [...drawPoints, newPoint]
+      setDrawPoints(newPoints)
+
+      // 清除之前的临时图层
+      if (tempLayer && mapRef.current) {
+        mapRef.current.removeLayer(tempLayer)
+      }
+
+      // 创建新的临时图层
+      if (drawMode === 'marker') {
+        // 标记模式
+        const marker = L.marker([lat, lng], {
+          icon: L.icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+          })
+        }).addTo(mapRef.current)
+        
+        setTempLayer(marker)
+        
+        // 标记模式只需要一个点，自动完成
+        setTimeout(() => finishDrawing(), 100)
+      } else if (drawMode === 'polygon' && newPoints.length >= 3) {
+        // 多边形模式
+        const latlngs = newPoints.map(([lng, lat]) => [lat, lng])
+        const polygon = L.polygon(latlngs, {
+          color: '#ef4444',
+          weight: 3,
+          fillColor: '#ef4444',
+          fillOpacity: 0.2
+        }).addTo(mapRef.current)
+        
+        setTempLayer(polygon)
+      } else if (drawMode === 'rectangle' && newPoints.length === 2) {
+        // 矩形模式
+        const [[lng1, lat1], [lng2, lat2]] = newPoints
+        const bounds = L.latLngBounds([lat1, lng1], [lat2, lng2])
+        const rectangle = L.rectangle(bounds, {
+          color: '#ef4444',
+          weight: 3,
+          fillColor: '#ef4444',
+          fillOpacity: 0.2
+        }).addTo(mapRef.current)
+        
+        setTempLayer(rectangle)
+        
+        // 矩形模式只需要两个点，自动完成
+        setTimeout(() => finishDrawing(), 100)
+      } else if (drawMode === 'polygon') {
+        // 多边形模式，显示临时线条
+        const latlngs = newPoints.map(([lng, lat]) => [lat, lng])
+        const polyline = L.polyline(latlngs, {
+          color: '#ef4444',
+          weight: 3
+        }).addTo(mapRef.current)
+        
+        setTempLayer(polyline)
+      }
+
+      return
+    }
+
+    // 如果在编辑模式下，更新位置坐标
+    setLatitude(lat.toString())
+    setLongitude(lng.toString())
+
+    // 如果没有覆盖范围，创建一个默认的覆盖范围
+    if (!tempGeometry) {
+      const bbox = createBoundingBoxPolygon({
+        minLng: lng - 0.01,
+        minLat: lat - 0.01,
+        maxLng: lng + 0.01,
+        maxLat: lat + 0.01
+      })
+      setTempGeometry(bbox)
+      setCoverage(stringifyGeoJSON(bbox))
+
+      // 在地图上显示覆盖范围
+      if (mapRef.current) {
+        const editLayer = L.geoJSON(bbox as any, {
+          style: {
+            color: '#ef4444',
+            weight: 3,
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            isEditLayer: true
+          }
+        }).addTo(mapRef.current)
+      }
+
+      // 自动保存
+      if (onGeometryUpdate) {
+        onGeometryUpdate(editingNode.id, bbox)
+      }
+    }
+  }
+
   // 组件挂载和尺寸处理
   useEffect(() => {
     setIsMounted(true)
@@ -562,6 +1045,47 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
       cleanupMap()
     }
   }, [])
+
+  // 处理外部编辑请求
+  useEffect(() => {
+    const handleStartNodeEdit = (event: CustomEvent) => {
+      const node = event.detail
+      console.log('Received external edit request for node:', node.name)
+      startEditing(node)
+    }
+    
+    window.addEventListener('start-node-edit', handleStartNodeEdit as EventListener)
+    
+    return () => {
+      window.removeEventListener('start-node-edit', handleStartNodeEdit as EventListener)
+    }
+  }, [isMapLoaded])
+
+  // 监听外部selectedNode变化
+  useEffect(() => {
+    if (selectedNode && mode === 'edit' && editable && isMapLoaded) {
+      console.log('External selectedNode changed, starting edit for:', selectedNode.name)
+      // 确保editingNode与外部selectedNode同步
+      if (!editingNode || editingNode.id !== selectedNode.id) {
+        startEditing(selectedNode)
+      }
+    } else if (!selectedNode && editingNode) {
+      console.log('External selectedNode cleared, canceling edit mode')
+      cancelEdit()
+    }
+  }, [selectedNode, mode, editable, isMapLoaded])
+
+  // 监听编辑模式变化
+  useEffect(() => {
+    if (mode === 'edit' && editable && selectedNode && isMapLoaded) {
+      console.log('Entering edit mode for node:', selectedNode.name)
+      // 自动启动编辑模式
+      startEditing(selectedNode)
+    } else if (mode !== 'edit' && editingNode) {
+      console.log('Exiting edit mode')
+      cancelEdit()
+    }
+  }, [mode, editable, selectedNode, isMapLoaded])
 
   // 监听容器尺寸变化
   useEffect(() => {
@@ -603,10 +1127,9 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
           mapRef.current.removeLayer(layer)
         })
         
-        // 移除地图容器
-        const container = mapRef.current.getContainer()
-        if (container && container.parentNode) {
-          container.parentNode.removeChild(container)
+        // 不要移除地图容器，只需要清理地图实例
+        if (mapRef.current._container && mapRef.current._container._leaflet_id) {
+          mapRef.current.remove()
         }
         
         // 清理引用
@@ -916,8 +1439,99 @@ const SharedMap = forwardRef<SharedMapRef, SharedMapProps>(({
                   </Button>
                 </div>
                 
-                {/* Coverage */}
+                {/* Drawing Controls */}
                 <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm">绘制工具</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant={isDrawing && drawMode === 'polygon' ? 'default' : 'outline'}
+                        onClick={() => startDrawing('polygon')}
+                        disabled={isDrawing && drawMode !== 'polygon'}
+                        className="text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        绘制多边形
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={isDrawing && drawMode === 'rectangle' ? 'default' : 'outline'}
+                        onClick={() => startDrawing('rectangle')}
+                        disabled={isDrawing && drawMode !== 'rectangle'}
+                        className="text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        绘制矩形
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={isDrawing && drawMode === 'marker' ? 'default' : 'outline'}
+                        onClick={() => startDrawing('marker')}
+                        disabled={isDrawing && drawMode !== 'marker'}
+                        className="text-xs"
+                      >
+                        <MapPin className="h-3 w-3 mr-1" />
+                        绘制点
+                      </Button>
+                    </div>
+                    {isDrawing && (
+                      <div className="mt-2 space-y-2">
+                        <Badge variant="outline" className="text-blue-600 border-blue-600 text-xs">
+                          🎨 绘制模式已激活 - 在地图上绘制{
+                            drawMode === 'polygon' ? '多边形' : 
+                            drawMode === 'rectangle' ? '矩形' : '点'
+                          }
+                        </Badge>
+                        
+                        {drawMode === 'polygon' && (
+                          <div className="text-xs text-muted-foreground">
+                            已选择 {drawPoints.length} 个点，至少需要3个点来完成多边形
+                          </div>
+                        )}
+                        
+                        {drawMode === 'rectangle' && drawPoints.length === 1 && (
+                          <div className="text-xs text-muted-foreground">
+                            已选择1个点，请点击选择第二个点完成矩形
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={finishDrawing}
+                            disabled={drawMode === 'polygon' && drawPoints.length < 3}
+                            className="text-xs flex-1"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            完成绘制
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={stopDrawing}
+                            className="text-xs flex-1"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            取消
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    💡 提示：点击地图设置位置，使用绘制工具创建覆盖范围
+                    <br/>
+                    📍 绘制点：单击地图放置标记
+                    <br/>
+                    ⬜ 绘制矩形：点击两个对角点
+                    <br/>
+                    🔷 绘制多边形：点击至少3个点，然后点击&ldquo;完成绘制&rdquo;
+                  </div>
+                </div>
+                
+                {/* Coverage */}
+                <div className="space-y-3 md:col-span-2">
                   <div>
                     <Label htmlFor="coverage" className="text-sm">覆盖范围 (GeoJSON)</Label>
                     <Textarea

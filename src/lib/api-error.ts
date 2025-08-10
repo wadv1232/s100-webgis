@@ -289,10 +289,7 @@ export function validateGeoJSON(geojson: any): { valid: boolean; error?: string 
     return { valid: false, error: 'Invalid GeoJSON: must be an object' }
   }
 
-  if (geojson.type !== 'FeatureCollection' && geojson.type !== 'Feature') {
-    return { valid: false, error: 'Invalid GeoJSON: must be a Feature or FeatureCollection' }
-  }
-
+  // 支持多种GeoJSON类型：FeatureCollection, Feature, 和直接几何图形
   if (geojson.type === 'FeatureCollection') {
     if (!Array.isArray(geojson.features)) {
       return { valid: false, error: 'Invalid GeoJSON: FeatureCollection must have features array' }
@@ -304,6 +301,34 @@ export function validateGeoJSON(geojson: any): { valid: boolean; error?: string 
         return { valid: false, error: `Invalid GeoJSON: Feature at index ${i} is malformed` }
       }
     }
+  } else if (geojson.type === 'Feature') {
+    if (!geojson.geometry) {
+      return { valid: false, error: 'Invalid GeoJSON: Feature must have geometry' }
+    }
+  } else if (['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon', 'GeometryCollection'].includes(geojson.type)) {
+    // 验证直接几何图形
+    if (!geojson.coordinates || !Array.isArray(geojson.coordinates)) {
+      return { valid: false, error: `Invalid GeoJSON: ${geojson.type} must have coordinates array` }
+    }
+    
+    // 针对不同几何类型的额外验证
+    if (geojson.type === 'Polygon') {
+      if (!Array.isArray(geojson.coordinates[0]) || geojson.coordinates[0].length < 3) {
+        return { valid: false, error: 'Invalid GeoJSON: Polygon must have at least 3 coordinate pairs' }
+      }
+      
+      // 验证坐标格式 [lng, lat]
+      for (const ring of geojson.coordinates) {
+        for (const coord of ring) {
+          if (!Array.isArray(coord) || coord.length !== 2 || 
+              typeof coord[0] !== 'number' || typeof coord[1] !== 'number') {
+            return { valid: false, error: 'Invalid GeoJSON: coordinates must be [lng, lat] number pairs' }
+          }
+        }
+      }
+    }
+  } else {
+    return { valid: false, error: 'Invalid GeoJSON: must be a FeatureCollection, Feature, or Geometry object' }
   }
 
   return { valid: true }

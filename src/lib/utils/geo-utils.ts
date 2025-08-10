@@ -60,12 +60,18 @@ export function parseGeoJSON(geojsonString: string): GeoJSONGeometry | null {
     
     const geojson = JSON.parse(geojsonString)
     
+    // 处理Feature类型
+    let geometry = geojson
+    if (geojson.type === 'Feature' && geojson.geometry) {
+      geometry = geojson.geometry
+    }
+    
     // 验证GeoJSON格式
-    if (!geojson.type || !geojson.coordinates) {
+    if (!geometry.type || !geometry.coordinates) {
       throw new Error('Invalid GeoJSON format')
     }
     
-    return geojson
+    return geometry
   } catch (error) {
     console.error('Failed to parse GeoJSON:', error)
     return null

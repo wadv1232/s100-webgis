@@ -90,6 +90,7 @@ export default function NodesPage() {
   const [isPolicyDialogOpen, setIsPolicyDialogOpen] = useState(false)
   const [editingCoverage, setEditingCoverage] = useState<string>('')
   const [apiKey, setApiKey] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<string>('overview')
   const [createForm, setCreateForm] = useState<CreateNodeForm>({
     node_id: '',
     node_name: '',
@@ -161,6 +162,15 @@ export default function NodesPage() {
       if (response.ok) {
         const data = await response.json()
         setNodes(data.nodes || [])
+      } else {
+        console.error('Error response:', response.status, response.statusText)
+        // 尝试获取错误详情
+        try {
+          const errorData = await response.json()
+          console.error('Error details:', errorData)
+        } catch (e) {
+          console.error('Could not parse error response')
+        }
       }
     } catch (error) {
       console.error('Error fetching nodes:', error)
@@ -390,10 +400,10 @@ export default function NodesPage() {
       services: node.capabilities?.map(cap => cap.productType) || [],
       location: {
         // 如果有覆盖范围，计算中心点，否则使用默认位置
-        lat: node.coverage ? calculateCenterFromGeoJSON(node.coverage)?.lat || 31.2000 : 31.2000,
-        lng: node.coverage ? calculateCenterFromGeoJSON(node.coverage)?.lng || 121.5000 : 121.5000
+        lat: node.coverage ? calculateCenterFromGeoJSON(typeof node.coverage === 'string' ? node.coverage : JSON.stringify(node.coverage))?.lat || 31.2000 : 31.2000,
+        lng: node.coverage ? calculateCenterFromGeoJSON(typeof node.coverage === 'string' ? node.coverage : JSON.stringify(node.coverage))?.lng || 121.5000 : 121.5000
       },
-      coverage: node.coverage
+      coverage: node.coverage ? (typeof node.coverage === 'string' ? node.coverage : JSON.stringify(node.coverage)) : undefined
     }))
     console.log('Converted nodes:', converted)
     return converted
@@ -415,8 +425,15 @@ export default function NodesPage() {
   const calculateCenterFromGeoJSON = (geojsonString: string) => {
     try {
       const geojson = JSON.parse(geojsonString)
-      if (geojson.type === 'Polygon' && geojson.coordinates && geojson.coordinates[0]) {
-        const coords = geojson.coordinates[0]
+      
+      // 处理Feature类型
+      let geometry = geojson
+      if (geojson.type === 'Feature' && geojson.geometry) {
+        geometry = geojson.geometry
+      }
+      
+      if (geometry.type === 'Polygon' && geometry.coordinates && geometry.coordinates[0]) {
+        const coords = geometry.coordinates[0]
         const sumLat = coords.reduce((sum: number, coord: number[]) => sum + coord[1], 0)
         const sumLng = coords.reduce((sum: number, coord: number[]) => sum + coord[0], 0)
         return {
@@ -720,7 +737,7 @@ export default function NodesPage() {
         {/* 节点详情 */}
         <div className="lg:col-span-2">
           {selectedNode ? (
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">概览</TabsTrigger>
                 <TabsTrigger value="coverage">覆盖范围</TabsTrigger>
@@ -741,11 +758,43 @@ export default function NodesPage() {
                         <CardDescription>{selectedNode.description}</CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Edit button clicked for node:', selectedNode?.name)
+                            // 使用状态控制切换到覆盖范围标签页
+                            setActiveTab('coverage')
+                            
+                            // 延迟启动编辑模式，确保标签页已切换
+                            setTimeout(() => {
+                              if (mapRef.current && selectedNode) {
+                                console.log('Starting edit mode for node:', selectedNode.name)
+                                if (mapRef.current.startEditing) {
+                                  mapRef.current.startEditing(selectedNode)
+                                } else {
+                                  console.log('startEditing method not available, using event fallback')
+                                  const event = new CustomEvent('start-node-edit', { detail: selectedNode })
+                                  window.dispatchEvent(event)
+                                }
+                              } else {
+                                console.warn('Map reference or selected node not available')
+                              }
+                            }, 500)
+                          }}
+                        >
                           <Edit className="h-4 w-4 mr-1" />
                           编辑
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Config button clicked for node:', selectedNode?.name)
+                            // 使用状态控制切换到配置管理标签页
+                            setActiveTab('configuration')
+                          }}
+                        >
                           <Settings className="h-4 w-4 mr-1" />
                           配置
                         </Button>
@@ -799,7 +848,20 @@ export default function NodesPage() {
                     <SharedMap
                       ref={mapRef}
                       nodes={convertNodesToMapFormat(getMapNodes())}
-                      selectedNode={convertNodesToMapFormat(getMapNodes())[0]}
+                      selectedNode={selectedNode ? {
+                        id: selectedNode.id,
+                        name: selectedNode.name,
+                        type: selectedNode.type as any,
+                        level: selectedNode.level,
+                        description: selectedNode.description || '',
+                        healthStatus: selectedNode.healthStatus as any,
+                        services: selectedNode.capabilities?.map(cap => cap.productType) || [],
+                        location: {
+                          lat: selectedNode.coverage ? calculateCenterFromGeoJSON(typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage))?.lat || 31.2000 : 31.2000,
+                          lng: selectedNode.coverage ? calculateCenterFromGeoJSON(typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage))?.lng || 121.5000 : 121.5000
+                        },
+                        coverage: selectedNode.coverage ? (typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage)) : undefined
+                      } : null}
                       onNodeSelect={(node) => {
                         // 找到原始节点并选中
                         const originalNode = nodes.find(n => n.id === node.id)
@@ -843,7 +905,20 @@ export default function NodesPage() {
                   <CardContent>
                     <SharedMap
                       nodes={convertNodesToMapFormat(getMapNodes())}
-                      selectedNode={convertNodesToMapFormat(getMapNodes())[0]}
+                      selectedNode={selectedNode ? {
+                        id: selectedNode.id,
+                        name: selectedNode.name,
+                        type: selectedNode.type as any,
+                        level: selectedNode.level,
+                        description: selectedNode.description || '',
+                        healthStatus: selectedNode.healthStatus as any,
+                        services: selectedNode.capabilities?.map(cap => cap.productType) || [],
+                        location: {
+                          lat: selectedNode.coverage ? calculateCenterFromGeoJSON(typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage))?.lat || 31.2000 : 31.2000,
+                          lng: selectedNode.coverage ? calculateCenterFromGeoJSON(typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage))?.lng || 121.5000 : 121.5000
+                        },
+                        coverage: selectedNode.coverage ? (typeof selectedNode.coverage === 'string' ? selectedNode.coverage : JSON.stringify(selectedNode.coverage)) : undefined
+                      } : null}
                       onNodeSelect={(node) => {
                         // 找到原始节点并选中
                         const originalNode = nodes.find(n => n.id === node.id)
@@ -876,11 +951,61 @@ export default function NodesPage() {
                           <Edit className="h-4 w-4 mr-1" />
                           编辑范围
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            if (selectedNode.coverage) {
+                              const dataStr = JSON.stringify(selectedNode.coverage, null, 2)
+                              const dataBlob = new Blob([dataStr], { type: 'application/json' })
+                              const url = URL.createObjectURL(dataBlob)
+                              const link = document.createElement('a')
+                              link.href = url
+                              link.download = `${selectedNode.id}_coverage.geojson`
+                              document.body.appendChild(link)
+                              link.click()
+                              document.body.removeChild(link)
+                              URL.revokeObjectURL(url)
+                            } else {
+                              alert('没有可导出的覆盖范围数据')
+                            }
+                          }}
+                        >
                           <Download className="h-4 w-4 mr-1" />
                           导出GeoJSON
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            // 创建文件输入元素
+                            const input = document.createElement('input')
+                            input.type = 'file'
+                            input.accept = '.geojson,.json'
+                            input.onchange = (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0]
+                              if (file) {
+                                const reader = new FileReader()
+                                reader.onload = (e) => {
+                                  try {
+                                    const geojson = JSON.parse(e.target?.result as string)
+                                    // 验证是否为有效的GeoJSON
+                                    if (geojson.type && geojson.coordinates) {
+                                      setEditingCoverage(JSON.stringify(geojson, null, 2))
+                                      setIsCoverageDialogOpen(true)
+                                    } else {
+                                      alert('无效的GeoJSON格式')
+                                    }
+                                  } catch (error) {
+                                    alert('文件解析失败，请确保是有效的GeoJSON格式')
+                                  }
+                                }
+                                reader.readAsText(file)
+                              }
+                            }
+                            input.click()
+                          }}
+                        >
                           <Upload className="h-4 w-4 mr-1" />
                           导入GeoJSON
                         </Button>
@@ -1013,8 +1138,8 @@ export default function NodesPage() {
                           <Button 
                             size="sm"
                             onClick={() => {
-                              // 导航到专门的配置管理页面
-                              window.location.href = '/node-configuration'
+                              // 显示详细配置对话框而不是导航到不存在的页面
+                              alert('详细配置功能正在开发中，将在此处提供完整的节点配置选项')
                             }}
                           >
                             <Settings className="h-4 w-4 mr-1" />
