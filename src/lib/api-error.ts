@@ -96,6 +96,38 @@ export class ApiErrorHandler {
       code: 'COMPLIANCE_CHECK_FAILED',
       message: 'Service compliance check failed',
       status: 400
+    },
+    
+    // 节点操作相关错误
+    NODE_NOT_READY: {
+      code: 'NODE_NOT_READY',
+      message: 'Node is not ready for the requested operation',
+      status: 400
+    },
+    NODE_HAS_CHILDREN: {
+      code: 'NODE_HAS_CHILDREN',
+      message: 'Cannot delete node that has children',
+      status: 400
+    },
+    NODE_HAS_DEPENDENCIES: {
+      code: 'NODE_HAS_DEPENDENCIES',
+      message: 'Cannot delete node that has dependencies',
+      status: 400
+    },
+    NODE_ALREADY_OFFLINE: {
+      code: 'NODE_ALREADY_OFFLINE',
+      message: 'Node is already in offline state',
+      status: 400
+    },
+    NODE_HAS_ACTIVE_CHILDREN: {
+      code: 'NODE_HAS_ACTIVE_CHILDREN',
+      message: 'Cannot set node offline while it has active children',
+      status: 400
+    },
+    NO_TARGET_NODES: {
+      code: 'NO_TARGET_NODES',
+      message: 'No suitable target nodes found for the operation',
+      status: 404
     }
   }
 
