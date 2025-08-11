@@ -304,6 +304,16 @@ export function getServiceConfig(): ServiceConfig {
   return defaultServiceConfig
 }
 
+// 获取有效产品类型列表
+export function getValidProducts(): string[] {
+  return Object.keys(defaultServiceConfig.productTypes)
+}
+
+// 获取有效服务类型列表
+export function getValidServiceTypes(): string[] {
+  return Object.keys(defaultServiceConfig.serviceTypes)
+}
+
 // 获取服务类型配置
 export function getServiceTypeConfig(serviceType: string) {
   const config = getServiceConfig()

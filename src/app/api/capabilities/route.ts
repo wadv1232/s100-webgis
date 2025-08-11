@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { NodeType, ServiceType } from '@prisma/client'
+import { handleError, formatErrorResponse, logError } from '@/lib/utils/errors'
 
 // 获取系统服务能力探索
 export async function GET(request: NextRequest) {
@@ -121,10 +123,12 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('获取服务能力失败:', error)
+    const appError = handleError(error)
+    logError(appError, { url: request.url, method: 'GET' })
+    
     return NextResponse.json(
-      { success: false, error: '获取服务能力失败' },
-      { status: 500 }
+      formatErrorResponse(appError),
+      { status: appError.statusCode }
     )
   }
 }
@@ -145,4 +149,104 @@ function generateServiceMatrix(capabilities: any[]) {
   })
   
   return matrix
+}
+
+// 创建服务能力
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { nodeId, productType, serviceType, isEnabled = true, endpoint, version = '1.0.0' } = body
+
+    // 验证必需字段
+    if (!nodeId || !productType || !serviceType) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields: nodeId, productType, serviceType' },
+        { status: 400 }
+      )
+    }
+
+    // 验证节点是否存在
+    const node = await db.node.findUnique({
+      where: { id: nodeId }
+    })
+
+    if (!node) {
+      return NextResponse.json(
+        { success: false, error: 'Node not found' },
+        { status: 404 }
+      )
+    }
+
+    // 验证产品类型是否有效
+    const validProducts = ['S101', 'S102', 'S104', 'S111', 'S124', 'S125', 'S131']
+    if (!validProducts.includes(productType)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid product type. Valid types: ${validProducts.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // 验证服务类型是否有效
+    const validServices = Object.values(ServiceType)
+    if (!validServices.includes(serviceType as ServiceType)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid service type. Valid types: ${validServices.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // 检查是否已存在相同的能力
+    const existingCapability = await db.capability.findFirst({
+      where: {
+        nodeId,
+        productType,
+        serviceType
+      }
+    })
+
+    if (existingCapability) {
+      return NextResponse.json(
+        { success: false, error: 'Capability already exists for this node, product, and service type' },
+        { status: 409 }
+      )
+    }
+
+    // 创建新的服务能力
+    const newCapability = await db.capability.create({
+      data: {
+        nodeId,
+        productType,
+        serviceType,
+        isEnabled,
+        endpoint: endpoint || `${node.apiUrl}/${productType.toLowerCase()}/${serviceType.toLowerCase()}`,
+        version
+      },
+      include: {
+        node: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            level: true,
+            apiUrl: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: newCapability,
+      message: 'Capability created successfully'
+    }, { status: 201 })
+
+  } catch (error) {
+    const appError = handleError(error)
+    logError(appError, { url: request.url, method: 'POST' })
+    
+    return NextResponse.json(
+      formatErrorResponse(appError),
+      { status: appError.statusCode }
+    )
+  }
 }

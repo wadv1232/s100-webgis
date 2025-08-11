@@ -730,28 +730,28 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <StatusCard
                       title="在线节点"
-                      value="4/4"
+                      value={`${systemStatus.onlineNodes}/${systemStatus.totalNodes}`}
                       trend="up"
                       icon={Server}
                       color="green"
                     />
                     <StatusCard
                       title="活跃服务"
-                      value="24"
+                      value={systemStatus.activeServices}
                       trend="up"
                       icon={Activity}
                       color="blue"
                     />
                     <StatusCard
                       title="数据集"
-                      value="156"
+                      value={systemStatus.datasets}
                       trend="stable"
                       icon={Database}
                       color="purple"
                     />
                     <StatusCard
                       title="系统健康度"
-                      value="98%"
+                      value={systemStatus.systemHealth}
                       trend="up"
                       icon={CheckCircle}
                       color="green"

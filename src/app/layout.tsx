@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { initializeServices } from "@/lib/services/service-init";
-import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeToggle";
+import { I18nProvider } from "@/lib/i18n/hooks";
+import { SkipToContent } from "@/components/AccessibleComponents";
 
 export const metadata: Metadata = {
   title: "S-100海事服务平台",
@@ -38,11 +40,15 @@ export default function RootLayout({
         className="antialiased bg-background text-foreground font-sans"
       >
         <AuthProvider>
-          <Navbar />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <Toaster />
+          <I18nProvider>
+            <ThemeProvider>
+              <SkipToContent />
+              <div className="min-h-screen bg-background">
+                {children}
+              </div>
+              <Toaster />
+            </ThemeProvider>
+          </I18nProvider>
         </AuthProvider>
       </body>
     </html>

@@ -108,7 +108,9 @@ npm run build
 npm start
 ```
 
-打开 [http://localhost:3000](http://localhost:3000) 查看运行的应用程序。
+打开 [http://localhost:3002](http://localhost:3002) 查看运行的应用程序。
+
+> **注意**: 如果端口 3000 被占用，Next.js 会自动使用端口 3002。
 
 ## 🔧 开发环境
 

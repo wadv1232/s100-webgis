@@ -43,6 +43,7 @@ enum DatasetStatus {
   PUBLISHED   // 已发布
   ARCHIVED    // 已归档
   ERROR       // 错误
+  EXPERIMENTAL // 实验性
 }
 
 // 节点健康状态枚举
@@ -141,6 +142,8 @@ model Node {
   baseMapConfigs  NodeBaseMapConfig[] // 节点底图配置
   userPreferences UserBaseMapPreference[] // 用户底图偏好
   identityProviders IdentityProvider[] // 节点身份提供商
+  healthMonitors    ServiceHealthMonitor[] // 关联的服务健康监控
+  accessStats       ServiceAccessStats[] // 关联的服务访问统计
 
   @@map("nodes")
 }
@@ -175,12 +178,17 @@ model Dataset {
   metadata      String?       // 元数据 (JSON格式)
   publishedAt   DateTime?     // 发布时间
   nodeId        String        // 所属节点ID
+  isExperimental Boolean      @default(false) // 是否为实验性数据集
+  accessControl String?      // 访问控制配置 (JSON格式)
+  experimentalNotes String?  // 实验性说明
+  experimentalExpires DateTime? // 实验性过期时间
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   // 关系
   node          Node          @relation(fields: [nodeId], references: [id])
   services      Service[]     // 相关服务
+  deployments   ServiceDeployment[] // 关联的部署记录
 
   @@map("datasets")
 }
@@ -212,11 +220,17 @@ model Service {
   endpoint      String      // 服务端点
   configuration String?     // 配置信息 (JSON格式)
   isActive      Boolean     @default(true)
+  version       String      @default("1.0.0") // 服务版本
+  isStable      Boolean     @default(true) // 是否为稳定版本
+  deploymentId  String?     // 部署ID (用于原子化更新)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   // 关系
   dataset       Dataset?    @relation(fields: [datasetId], references: [id])
+  deployments   ServiceDeployment[] // 关联的部署记录
+  healthMonitors ServiceHealthMonitor[] // 关联的健康监控
+  accessStats   ServiceAccessStats[] // 关联的访问统计
 
   @@map("services")
 }
@@ -718,6 +732,119 @@ enum AlertStatus {
   ACTIVE                // 活跃
   RESOLVED              // 已解决
   SUPPRESSED            // 已抑制
+}
+
+// 服务部署状态枚举
+enum DeploymentStatus {
+  PENDING               // 等待部署
+  DEPLOYING             // 部署中
+  DEPLOYED              // 已部署
+  FAILED                // 部署失败
+  ROLLING_BACK          // 回滚中
+  ROLLED_BACK           // 已回滚
+}
+
+// 服务部署表
+model ServiceDeployment {
+  id                    String              @id @default(cuid())
+  deploymentId          String              @unique           // 部署唯一标识
+  serviceId             String              // 服务ID
+  datasetId             String              // 数据集ID
+  version               String              // 部署版本
+  status                DeploymentStatus    @default(PENDING)
+  previousVersion       String?             // 上一个版本
+  isAtomic              Boolean             @default(true)   // 是否原子化部署
+  rollbackEnabled       Boolean             @default(true)   // 是否支持回滚
+  deploymentConfig      String?             // 部署配置 (JSON格式)
+  rollbackConfig        String?             // 回滚配置 (JSON格式)
+  deploymentLog         String?             // 部署日志
+  errorMessage          String?             // 错误信息
+  startedAt             DateTime?           // 开始时间
+  completedAt           DateTime?           // 完成时间
+  duration              Int?                // 执行时长(毫秒)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // 关系
+  service               Service             @relation(fields: [serviceId], references: [id])
+  dataset               Dataset             @relation(fields: [datasetId], references: [id])
+
+  @@map("service_deployments")
+}
+
+// 服务健康状态枚举
+enum ServiceHealth {
+  HEALTHY               // 健康
+  WARNING               // 警告
+  ERROR                 // 错误
+  OFFLINE               // 离线
+}
+
+// 服务健康监控表
+model ServiceHealthMonitor {
+  id                    String              @id @default(cuid())
+  serviceId             String              // 服务ID
+  nodeId                String              // 节点ID
+  healthStatus          ServiceHealth       @default(OFFLINE)
+  responseTime          Int?                // 响应时间(毫秒)
+  uptime                Float               @default(0.0) // 可用性 (0.0-1.0)
+  lastCheckAt           DateTime?           // 最后检查时间
+  nextCheckAt           DateTime?           // 下次检查时间
+  errorMessage          String?             // 错误信息
+  checkInterval         Int                 @default(300) // 检查间隔(秒)
+  isMonitoring          Boolean             @default(true) // 是否监控
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // 关系
+  service               Service             @relation(fields: [serviceId], references: [id])
+  node                  Node                @relation(fields: [nodeId], references: [id])
+  metrics               ServiceMetric[]     // 关联的指标
+
+  @@unique([serviceId, nodeId])
+  @@map("service_health_monitors")
+}
+
+// 服务访问统计表
+model ServiceAccessStats {
+  id                    String              @id @default(cuid())
+  serviceId             String              // 服务ID
+  nodeId                String              // 节点ID
+  date                  DateTime            // 统计日期
+  requestCount          Int                 @default(0) // 请求次数
+  successCount          Int                 @default(0) // 成功次数
+  errorCount            Int                 @default(0) // 错误次数
+  avgResponseTime       Float               @default(0.0) // 平均响应时间
+  totalDataTransferred  Int                 @default(0) // 总数据传输量(字节)
+  uniqueUsers           Int                 @default(0) // 独立用户数
+  topEndpoints          String?             // 热门端点 (JSON格式)
+  errorDetails          String?             // 错误详情 (JSON格式)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // 关系
+  service               Service             @relation(fields: [serviceId], references: [id])
+  node                  Node                @relation(fields: [nodeId], references: [id])
+
+  @@unique([serviceId, nodeId, date])
+  @@map("service_access_stats")
+}
+
+// 服务指标表
+model ServiceMetric {
+  id                    String              @id @default(cuid())
+  monitorId             String              // 监控ID
+  metricName            String              // 指标名称
+  metricValue           Float               // 指标值
+  metricUnit            String?             // 指标单位
+  recordedAt            DateTime            // 记录时间
+  metadata              String?             // 元数据 (JSON格式)
+  createdAt             DateTime            @default(now())
+
+  // 关系
+  monitor               ServiceHealthMonitor @relation(fields: [monitorId], references: [id])
+
+  @@map("service_metrics")
 }
 
 // Post表 (保持向后兼容)

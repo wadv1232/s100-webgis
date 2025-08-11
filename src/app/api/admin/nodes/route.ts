@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ApiErrorHandler, withApiHandler } from '@/lib/api-error'
 import { getAppConfig } from '@/config/app'
-import { getServiceConfig } from '@/config/services'
+import { getServiceConfig, getValidProducts } from '@/config/services'
 import { NodeType, NodeHealth } from '@prisma/client'
 
 interface CreateNodeRequest {
@@ -133,8 +133,7 @@ const createNodeHandler = withApiHandler(async (request: NextRequest): Promise<N
       })
     }
 
-    const serviceConfig = getServiceConfig()
-    const validProducts = serviceConfig.validProducts
+    const validProducts = getValidProducts()
     const invalidProducts = body.required_products.filter(p => !validProducts.includes(p))
     if (invalidProducts.length > 0) {
       return ApiErrorHandler.createErrorResponse('INVALID_NODE_CONFIG', {

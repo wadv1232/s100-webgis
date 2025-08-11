@@ -15,6 +15,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { UserRole, Permission } from '@prisma/client'
 import { USER_SCENARIOS } from '@/lib/auth/permissions'
 import { mockUsers, mockNodes } from '@/mock-data'
+import MainLayout from '@/components/MainLayout'
+import ResponsiveContainer from '@/components/ResponsiveLayout'
+import { AccessibleButton, AccessibleInput } from '@/components/AccessibleComponents'
+import ThemeToggle from '@/components/ThemeToggle'
 import { 
   Users, 
   UserPlus, 
@@ -71,7 +75,7 @@ export default function UsersPage() {
     username: '',
     name: '',
     role: UserRole.USER,
-    nodeId: '',
+    nodeId: 'unassigned',
     isActive: true,
     permissions: [] as Permission[]
   })
@@ -171,7 +175,7 @@ export default function UsersPage() {
   }
 
   const getNodeName = (nodeId?: string) => {
-    if (!nodeId) return '未分配'
+    if (!nodeId || nodeId === 'unassigned') return '未分配'
     const node = nodes.find(n => n.id === nodeId)
     return node?.name || '未知节点'
   }
@@ -246,7 +250,7 @@ export default function UsersPage() {
       username: user.username,
       name: user.name || '',
       role: user.role,
-      nodeId: user.nodeId || '',
+      nodeId: user.nodeId || 'unassigned',
       isActive: user.isActive,
       permissions: user.permissions || []
     })
@@ -259,7 +263,7 @@ export default function UsersPage() {
       username: '',
       name: '',
       role: UserRole.USER,
-      nodeId: '',
+      nodeId: 'unassigned',
       isActive: true,
       permissions: []
     })
@@ -268,283 +272,249 @@ export default function UsersPage() {
 
   if (!canReadUsers) {
     return (
-      <div className="container mx-auto py-8">
-        <Alert>
-          <XCircle className="h-4 w-4" />
-          <AlertDescription>
-            您没有权限访问用户管理页面。
-          </AlertDescription>
-        </Alert>
-      </div>
+      <MainLayout>
+        <ResponsiveContainer>
+          <Alert>
+            <XCircle className="h-4 w-4" />
+            <AlertDescription>
+              您没有权限访问用户管理页面。
+            </AlertDescription>
+          </Alert>
+        </ResponsiveContainer>
+      </MainLayout>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">用户管理</h1>
-          <p className="text-gray-600 mt-2">
-            管理系统用户、角色和权限分配
-          </p>
-        </div>
-        
-        {canCreateUsers && (
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                创建用户
-              </Button>
-            </DialogTrigger>
+    <MainLayout>
+      <ResponsiveContainer>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">用户管理</h1>
+              <p className="text-gray-600 mt-2">
+                管理系统用户、角色和权限分配
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              
+              {canCreateUsers && (
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <AccessibleButton>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      创建用户
+                    </AccessibleButton>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>创建新用户</DialogTitle>
+                      <DialogDescription>
+                        填写用户基本信息和分配角色权限
+                      </DialogDescription>
+                    </DialogHeader>
+                    <UserForm
+                      formData={formData}
+                      setFormData={setFormData}
+                      nodes={nodes}
+                      onSubmit={handleCreateUser}
+                      onCancel={() => setIsCreateDialogOpen(false)}
+                      isLoading={isLoading}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+          </div>
+
+          {/* Alerts */}
+          {error && (
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                搜索和筛选
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="search">搜索用户</Label>
+                  <Input
+                    id="search"
+                    placeholder="输入邮箱、用户名或姓名..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="w-48">
+                  <Label htmlFor="role-filter">角色筛选</Label>
+                  <Select value={roleFilter} onValueChange={(value: UserRole | 'ALL') => setRoleFilter(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">所有角色</SelectItem>
+                      {Object.values(UserRole).map(role => (
+                        <SelectItem key={role} value={role}>
+                          {getRoleName(role)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Users Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>用户列表</CardTitle>
+              <CardDescription>
+                当前系统中的所有用户 ({filteredUsers.length} 个用户)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">加载中...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>用户信息</TableHead>
+                      <TableHead>角色</TableHead>
+                      <TableHead>所属节点</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead>用户场景</TableHead>
+                      <TableHead>最后登录</TableHead>
+                      <TableHead>操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => {
+                      const scenario = getScenarioForRole(user.role)
+                      const ScenarioIcon = scenario ? {
+                        Anchor: Anchor,
+                        Database: Database,
+                        Map: Map,
+                        Settings: Shield,
+                        Activity: Activity
+                      }[scenario.icon || 'Anchor'] || Anchor : null
+                      
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{user.name || user.username}</div>
+                              <div className="text-sm text-gray-600">{user.email}</div>
+                              <div className="text-xs text-gray-500">@{user.username}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getRoleBadgeColor(user.role)}>
+                              {getRoleName(user.role)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{getNodeName(user.nodeId)}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch checked={user.isActive} disabled />
+                              <span className="text-sm">{user.isActive ? '激活' : '禁用'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {scenario && ScenarioIcon && (
+                              <div className="flex items-center gap-2">
+                                <ScenarioIcon className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm">{scenario.name}</span>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {user.lastLoginAt ? 
+                                new Date(user.lastLoginAt).toLocaleDateString('zh-CN') : 
+                                '从未登录'
+                              }
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {canUpdateUsers && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openEditDialog(user)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {canDeleteUsers && user.role !== UserRole.ADMIN && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Edit Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>创建新用户</DialogTitle>
+                <DialogTitle>编辑用户</DialogTitle>
                 <DialogDescription>
-                  填写用户基本信息和分配角色权限
+                  修改用户信息和权限分配
                 </DialogDescription>
               </DialogHeader>
               <UserForm
                 formData={formData}
                 setFormData={setFormData}
                 nodes={nodes}
-                onSubmit={handleCreateUser}
-                onCancel={() => setIsCreateDialogOpen(false)}
+                onSubmit={handleUpdateUser}
+                onCancel={() => setIsEditDialogOpen(false)}
                 isLoading={isLoading}
+                isEdit
               />
             </DialogContent>
           </Dialog>
-        )}
-      </div>
-
-      {/* Alerts */}
-      {error && (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {success && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            搜索和筛选
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="search">搜索用户</Label>
-              <Input
-                id="search"
-                placeholder="输入邮箱、用户名或姓名..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="w-48">
-              <Label htmlFor="role-filter">角色筛选</Label>
-              <Select value={roleFilter} onValueChange={(value: UserRole | 'ALL') => setRoleFilter(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">所有角色</SelectItem>
-                  {Object.values(UserRole).map(role => (
-                    <SelectItem key={role} value={role}>
-                      {getRoleName(role)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* User Scenarios Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            用户场景参考
-          </CardTitle>
-          <CardDescription>
-            不同用户场景对应的默认角色和权限
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {USER_SCENARIOS.map((scenario, index) => {
-              const ScenarioIcon = {
-                Anchor: Anchor,
-                Database: Database,
-                Map: Map,
-                Settings: Shield,
-                Activity: Activity
-              }[scenario.icon || 'Anchor'] || Anchor
-              
-              return (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ScenarioIcon className={`h-5 w-5 text-${scenario.color}-600`} />
-                    <h3 className="font-medium">{scenario.name}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{scenario.description}</p>
-                  <div className="space-y-1">
-                    <Badge variant="outline" className="text-xs">
-                      默认角色: {getRoleName(scenario.defaultRole)}
-                    </Badge>
-                    <div className="text-xs text-gray-500">
-                      权限数量: {scenario.permissions.length}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>用户列表</CardTitle>
-          <CardDescription>
-            当前系统中的所有用户 ({filteredUsers.length} 个用户)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-600">加载中...</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>用户信息</TableHead>
-                  <TableHead>角色</TableHead>
-                  <TableHead>所属节点</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>用户场景</TableHead>
-                  <TableHead>最后登录</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => {
-                  const scenario = getScenarioForRole(user.role)
-                  const ScenarioIcon = scenario ? {
-                    Anchor: Anchor,
-                    Database: Database,
-                    Map: Map,
-                    Settings: Shield,
-                    Activity: Activity
-                  }[scenario.icon || 'Anchor'] || Anchor : null
-                  
-                  return (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.name || user.username}</div>
-                          <div className="text-sm text-gray-600">{user.email}</div>
-                          <div className="text-xs text-gray-500">@{user.username}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {getRoleName(user.role)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{getNodeName(user.nodeId)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch checked={user.isActive} disabled />
-                          <span className="text-sm">{user.isActive ? '激活' : '禁用'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {scenario && ScenarioIcon && (
-                          <div className="flex items-center gap-2">
-                            <ScenarioIcon className={`h-4 w-4 text-${scenario.color}-600`} />
-                            <span className="text-sm">{scenario.name}</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {user.lastLoginAt ? 
-                            new Date(user.lastLoginAt).toLocaleDateString('zh-CN') : 
-                            '从未登录'
-                          }
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {canUpdateUsers && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openEditDialog(user)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canDeleteUsers && user.role !== UserRole.ADMIN && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteUser(user.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑用户</DialogTitle>
-            <DialogDescription>
-              修改用户信息和权限分配
-            </DialogDescription>
-          </DialogHeader>
-          <UserForm
-            formData={formData}
-            setFormData={setFormData}
-            nodes={nodes}
-            onSubmit={handleUpdateUser}
-            onCancel={() => setIsEditDialogOpen(false)}
-            isLoading={isLoading}
-            isEdit
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+      </ResponsiveContainer>
+    </MainLayout>
   )
 }
 
@@ -622,7 +592,7 @@ function UserForm({ formData, setFormData, nodes, onSubmit, onCancel, isLoading,
             <SelectValue placeholder="选择节点" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">未分配</SelectItem>
+            <SelectItem value="unassigned">未分配</SelectItem>
             {nodes.map(node => (
               <SelectItem key={node.id} value={node.id}>
                 {node.name}

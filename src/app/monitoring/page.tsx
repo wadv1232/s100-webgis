@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
+import MainLayout from '@/components/MainLayout'
+import ResponsiveContainer, { ResponsiveGrid } from '@/components/ResponsiveLayout'
+import { AccessibleButton } from '@/components/AccessibleComponents'
+import ThemeToggle from '@/components/ThemeToggle'
 import { 
   Activity, 
   RefreshCw, 
@@ -241,36 +245,39 @@ export default function MonitoringPage() {
   }, [])
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Activity className="h-8 w-8 text-green-600" />
-            节点健康监控
-          </h1>
-          <p className="text-gray-600 mt-2">
-            实时监控S-100架构中所有节点的健康状态和服务可用性
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1h">1小时</SelectItem>
-              <SelectItem value="24h">24小时</SelectItem>
-              <SelectItem value="7d">7天</SelectItem>
-              <SelectItem value="30d">30天</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={fetchMonitoringData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            刷新
-          </Button>
-        </div>
-      </div>
+    <MainLayout>
+      <ResponsiveContainer>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <Activity className="h-8 w-8 text-green-600" />
+                节点健康监控
+              </h1>
+              <p className="text-gray-600 mt-2">
+                实时监控S-100架构中所有节点的健康状态和服务可用性
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">1小时</SelectItem>
+                  <SelectItem value="24h">24小时</SelectItem>
+                  <SelectItem value="7d">7天</SelectItem>
+                  <SelectItem value="30d">30天</SelectItem>
+                </SelectContent>
+              </Select>
+              <AccessibleButton variant="outline" onClick={fetchMonitoringData} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                刷新
+              </AccessibleButton>
+            </div>
+          </div>
 
       {/* 系统健康概览 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -607,6 +614,8 @@ export default function MonitoringPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </ResponsiveContainer>
+    </MainLayout>
   )
 }

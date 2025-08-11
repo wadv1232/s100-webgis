@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -46,32 +46,47 @@ export default function DeveloperPortal() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedMethod, setSelectedMethod] = useState<string>('all')
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null)
+
+  // 获取类别图标
+  const getCategoryIcon = (category: string) => {
+    const iconMap: Record<string, any> = {
+      'public': Globe,
+      'federation': Settings,
+      'administration': Shield
+    }
+    return iconMap[category] || Code
+  }
 
   // 动态API服务数据
   const apiServices = useMemo(() => {
     const services = []
     
-    // 处理所有类别的API
-    Object.entries(apiDocumentation).forEach(([categoryKey, categories]) => {
-      categories.forEach(category => {
-        const service = {
-          category: category.name,
-          description: category.description,
-          icon: getCategoryIcon(categoryKey),
-          securityLevel: category.securityLevel,
-          endpoints: category.endpoints.map(endpoint => ({
-            method: endpoint.method,
-            path: endpoint.path,
-            description: endpoint.description,
-            auth: endpoint.authentication,
-            securityLevel: endpoint.securityLevel,
-            category: categoryKey,
-            parameters: endpoint.parameters || [],
-            responses: endpoint.responses || []
-          }))
-        }
-        services.push(service)
-      })
+    // 处理所有类别的API，只处理实际的API类别
+    const apiCategories = ['public', 'federation', 'administration']
+    apiCategories.forEach(categoryKey => {
+      const categories = apiDocumentation[categoryKey]
+      if (Array.isArray(categories)) {
+        categories.forEach(category => {
+          const service = {
+            category: category.name,
+            description: category.description,
+            icon: getCategoryIcon(categoryKey),
+            securityLevel: category.securityLevel,
+            endpoints: category.endpoints.map(endpoint => ({
+              method: endpoint.method,
+              path: endpoint.path,
+              description: endpoint.description,
+              authentication: endpoint.authentication,
+              securityLevel: endpoint.securityLevel,
+              category: categoryKey,
+              parameters: endpoint.parameters || [],
+              responses: endpoint.responses || []
+            }))
+          }
+          services.push(service)
+        })
+      }
     })
     
     return services
@@ -93,16 +108,6 @@ export default function DeveloperPortal() {
       })
     })).filter(service => service.endpoints.length > 0)
   }, [apiServices, searchTerm, selectedCategory, selectedMethod])
-
-  // 获取类别图标
-  const getCategoryIcon = (category: string) => {
-    const iconMap: Record<string, any> = {
-      'public': Globe,
-      'federation': Settings,
-      'administration': Shield
-    }
-    return iconMap[category] || Code
-  }
 
   // 获取安全级别颜色
   const getSecurityColor = (level: string) => {
@@ -547,7 +552,14 @@ export default function DeveloperPortal() {
                     {filteredServices.map((service, index) => (
                       <button
                         key={index}
-                        className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className={`w-full text-left p-3 border rounded-lg transition-colors ${
+                          selectedServiceIndex === index 
+                            ? 'bg-blue-50 border-blue-200' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedServiceIndex(
+                          selectedServiceIndex === index ? null : index
+                        )}
                       >
                         <div className="flex items-center gap-2">
                           <service.icon className="h-4 w-4 text-blue-600" />
@@ -565,83 +577,167 @@ export default function DeveloperPortal() {
 
               {/* API Details */}
               <div className="lg:col-span-2 space-y-6">
-                {filteredServices.map((service, index) => (
-                  <Card key={index}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <service.icon className="h-5 w-5 text-blue-600" />
-                        {service.category}
-                        <Badge variant="outline" className="text-xs">
-                          {service.endpoints.length} 个端点
-                        </Badge>
-                        <Badge className={`text-xs ${getSecurityColor(service.securityLevel)}`}>
-                          {service.securityLevel}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {service.endpoints.map((endpoint, idx) => (
-                          <div key={idx} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                {getMethodBadge(endpoint.method)}
-                                <code className="bg-gray-100 px-2 py-1 rounded font-mono text-sm">
-                                  {endpoint.path}
-                                </code>
-                                <Badge variant="outline" className="text-xs">
-                                  {endpoint.auth}
-                                </Badge>
-                                <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
-                                  {endpoint.securityLevel}
-                                </Badge>
+                {selectedServiceIndex === null ? (
+                  // 显示所有服务或搜索结果
+                  filteredServices.map((service, index) => (
+                    <Card key={index}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <service.icon className="h-5 w-5 text-blue-600" />
+                          {service.category}
+                          <Badge variant="outline" className="text-xs">
+                            {service.endpoints.length} 个端点
+                          </Badge>
+                          <Badge className={`text-xs ${getSecurityColor(service.securityLevel)}`}>
+                            {service.securityLevel}
+                          </Badge>
+                        </CardTitle>
+                        <CardDescription>{service.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {service.endpoints.map((endpoint, idx) => (
+                            <div key={idx} className="border rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  {getMethodBadge(endpoint.method)}
+                                  <code className="bg-gray-100 px-2 py-1 rounded font-mono text-sm">
+                                    {endpoint.path}
+                                  </code>
+                                  <Badge variant="outline" className="text-xs">
+                                    {endpoint.authentication}
+                                  </Badge>
+                                  <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
+                                    {endpoint.securityLevel}
+                                  </Badge>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => window.open(`/api-test/${endpoint.category}/${endpoint.method}/${encodeURIComponent(endpoint.path)}`, '_blank')}
+                                  >
+                                    <Play className="h-3 w-3 mr-1" />
+                                    测试
+                                  </Button>
+                                </div>
                               </div>
+                              <p className="text-sm text-gray-600 mb-3">{endpoint.description}</p>
+                              
+                              {endpoint.parameters && endpoint.parameters.length > 0 && (
+                                <div className="mb-3">
+                                  <h5 className="text-sm font-medium mb-2">路径参数</h5>
+                                  <div className="space-y-1">
+                                    {endpoint.parameters.map((param, paramIdx) => (
+                                      <div key={paramIdx} className="flex items-center gap-2 text-xs">
+                                        <code className="bg-gray-100 px-1 rounded">{param.name}</code>
+                                        <span className="text-gray-500">({param.type})</span>
+                                        <span className="text-gray-600">{param.description}</span>
+                                        {param.required && <Badge variant="destructive" className="text-xs">必需</Badge>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
                               <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => window.open(`/api-test/${endpoint.category}/${endpoint.method}/${encodeURIComponent(endpoint.path)}`, '_blank')}
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  测试
+                                <Button variant="outline" size="sm">
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  文档
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  示例
                                 </Button>
                               </div>
                             </div>
-                            <p className="text-sm text-gray-600 mb-3">{endpoint.description}</p>
-                            
-                            {endpoint.parameters && endpoint.parameters.length > 0 && (
-                              <div className="mb-3">
-                                <h5 className="text-sm font-medium mb-2">路径参数</h5>
-                                <div className="space-y-1">
-                                  {endpoint.parameters.map((param, paramIdx) => (
-                                    <div key={paramIdx} className="flex items-center gap-2 text-xs">
-                                      <code className="bg-gray-100 px-1 rounded">{param.name}</code>
-                                      <span className="text-gray-500">({param.type})</span>
-                                      <span className="text-gray-600">{param.description}</span>
-                                      {param.required && <Badge variant="destructive" className="text-xs">必需</Badge>}
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  // 只显示选中的服务
+                  filteredServices.map((service, index) => 
+                    index === selectedServiceIndex && (
+                      <Card key={index}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <service.icon className="h-5 w-5 text-blue-600" />
+                            {service.category}
+                            <Badge variant="outline" className="text-xs">
+                              {service.endpoints.length} 个端点
+                            </Badge>
+                            <Badge className={`text-xs ${getSecurityColor(service.securityLevel)}`}>
+                              {service.securityLevel}
+                            </Badge>
+                          </CardTitle>
+                          <CardDescription>{service.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {service.endpoints.map((endpoint, idx) => (
+                              <div key={idx} className="border rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    {getMethodBadge(endpoint.method)}
+                                    <code className="bg-gray-100 px-2 py-1 rounded font-mono text-sm">
+                                      {endpoint.path}
+                                    </code>
+                                    <Badge variant="outline" className="text-xs">
+                                      {endpoint.authentication}
+                                    </Badge>
+                                    <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
+                                      {endpoint.securityLevel}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => window.open(`/api-test/${endpoint.category}/${endpoint.method}/${encodeURIComponent(endpoint.path)}`, '_blank')}
+                                    >
+                                      <Play className="h-3 w-3 mr-1" />
+                                      测试
+                                    </Button>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-3">{endpoint.description}</p>
+                                
+                                {endpoint.parameters && endpoint.parameters.length > 0 && (
+                                  <div className="mb-3">
+                                    <h5 className="text-sm font-medium mb-2">路径参数</h5>
+                                    <div className="space-y-1">
+                                      {endpoint.parameters.map((param, paramIdx) => (
+                                        <div key={paramIdx} className="flex items-center gap-2 text-xs">
+                                          <code className="bg-gray-100 px-1 rounded">{param.name}</code>
+                                          <span className="text-gray-500">({param.type})</span>
+                                          <span className="text-gray-600">{param.description}</span>
+                                          {param.required && <Badge variant="destructive" className="text-xs">必需</Badge>}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                  </div>
+                                )}
+                                
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm">
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    文档
+                                  </Button>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    示例
+                                  </Button>
                                 </div>
                               </div>
-                            )}
-                            
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <FileText className="h-3 w-3 mr-1" />
-                                文档
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-3 w-3 mr-1" />
-                                示例
-                              </Button>
-                            </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </CardContent>
+                      </Card>
+                    )
+                  )
+                )}
               </div>
             </div>
           </TabsContent>
@@ -736,6 +832,59 @@ export default function DeveloperPortal() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Public APIs from auto-generated data */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  对外数据服务API
+                </CardTitle>
+                <CardDescription>
+                  系统自动生成的对外数据服务API接口
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {apiDocumentation.public.map((category, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          {React.createElement(category.icon, { className: "h-5 w-5 text-blue-600" })}
+                          <h4 className="font-medium">{category.name}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {category.endpoints.length} 个端点
+                          </Badge>
+                          <Badge className={`text-xs ${getSecurityColor(category.securityLevel)}`}>
+                            {category.securityLevel}
+                          </Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+                      <div className="space-y-2">
+                        {category.endpoints.slice(0, 3).map((endpoint, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm">
+                            {getMethodBadge(endpoint.method)}
+                            <code className="bg-gray-100 px-2 py-1 rounded text-xs">{endpoint.path}</code>
+                            <Badge variant="outline" className="text-xs">
+                              {endpoint.authentication}
+                            </Badge>
+                            <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
+                              {endpoint.securityLevel}
+                            </Badge>
+                          </div>
+                        ))}
+                        {category.endpoints.length > 3 && (
+                          <div className="text-xs text-gray-500">
+                            还有 {category.endpoints.length - 3} 个端点...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Internal API Tab */}
@@ -762,88 +911,85 @@ export default function DeveloperPortal() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg">数据摄入服务</h3>
-                      <div className="space-y-3">
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">S-101数据摄入</h4>
-                          <p className="text-sm text-gray-600 mb-3">电子海图数据批量摄入和处理</p>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-green-500">POST</Badge>
-                              <code className="text-xs">/internal/ingest/s101</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-blue-500">GET</Badge>
-                              <code className="text-xs">/internal/ingest/s101/status/{'{'}jobId{'}'}</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">S-102数据摄入</h4>
-                          <p className="text-sm text-gray-600 mb-3">高精度水深数据批量摄入和处理</p>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-green-500">POST</Badge>
-                              <code className="text-xs">/internal/ingest/s102</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-yellow-500">PUT</Badge>
-                              <code className="text-xs">/internal/ingest/s102/{'{'}datasetId{'}'}</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
+                  {/* Federation APIs */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-lg flex items-center gap-2">
+                      <Network className="h-5 w-5" />
+                      协作API (Federation API)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {apiDocumentation.federation.map((category, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <category.icon className="h-4 w-4 text-orange-600" />
+                              <h4 className="font-medium">{category.name}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {category.endpoints.length} 个端点
+                              </Badge>
+                              <Badge className={`text-xs ${getSecurityColor(category.securityLevel)}`}>
+                                {category.securityLevel}
+                              </Badge>
                             </div>
                           </div>
+                          <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+                          <div className="space-y-2">
+                            {category.endpoints.slice(0, 2).map((endpoint, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm">
+                                {getMethodBadge(endpoint.method)}
+                                <code className="bg-gray-100 px-2 py-1 rounded text-xs">{endpoint.path}</code>
+                                <Badge variant="outline" className="text-xs">
+                                  {endpoint.authentication}
+                                </Badge>
+                                <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
+                                  {endpoint.securityLevel}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-lg">系统管理服务</h3>
-                      <div className="space-y-3">
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">节点管理</h4>
-                          <p className="text-sm text-gray-600 mb-3">网络节点和层级结构管理</p>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-blue-500">GET</Badge>
-                              <code className="text-xs">/internal/nodes</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-green-500">POST</Badge>
-                              <code className="text-xs">/internal/nodes</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-yellow-500">PUT</Badge>
-                              <code className="text-xs">/internal/nodes/{'{'}nodeId{'}'}</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-medium mb-2">服务监控</h4>
-                          <p className="text-sm text-gray-600 mb-3">服务健康状态和性能监控</p>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-blue-500">GET</Badge>
-                              <code className="text-xs">/internal/monitoring/health</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge className="bg-blue-500">GET</Badge>
-                              <code className="text-xs">/internal/monitoring/metrics</code>
-                              <Badge variant="destructive" className="text-xs">Internal</Badge>
+                  </div>
+
+                  {/* Administration APIs */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-lg flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      内部综合管理API (Administration API)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {apiDocumentation.administration.map((category, index) => (
+                        <div key={index} className="border rounded-lg p-4 border-red-200 bg-red-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <category.icon className="h-4 w-4 text-red-600" />
+                              <h4 className="font-medium">{category.name}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {category.endpoints.length} 个端点
+                              </Badge>
+                              <Badge className={`text-xs ${getSecurityColor(category.securityLevel)}`}>
+                                {category.securityLevel}
+                              </Badge>
                             </div>
                           </div>
+                          <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+                          <div className="space-y-2">
+                            {category.endpoints.slice(0, 2).map((endpoint, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm">
+                                {getMethodBadge(endpoint.method)}
+                                <code className="bg-gray-100 px-2 py-1 rounded text-xs">{endpoint.path}</code>
+                                <Badge variant="outline" className="text-xs">
+                                  {endpoint.authentication}
+                                </Badge>
+                                <Badge className={`text-xs ${getSecurityColor(endpoint.securityLevel)}`}>
+                                  {endpoint.securityLevel}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>

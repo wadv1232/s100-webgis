@@ -37,11 +37,50 @@ import {
 } from 'lucide-react'
 import S100ServiceMap from '@/components/maps/SharedMapFixed'
 import ServiceDetailModal from '@/components/ui/ServiceDetailModal'
-import { mapServiceNodes, mockS100Services } from '@/mock-data'
+import { mapServiceNodes, mockS100Services } from '@/lib/mock-data'
 
 export default function MapServicesPage() {
   const [selectedNode, setSelectedNode] = useState(mapServiceNodes[3]) // 默认选择上海港
   const [s100Services, setS100Services] = useState(mockS100Services)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // 获取真实数据
+  useEffect(() => {
+    const fetchRealData = async () => {
+      try {
+        // 获取节点数据
+        const nodesResponse = await fetch('/api/nodes')
+        if (nodesResponse.ok) {
+          const nodesData = await nodesResponse.json()
+          if (nodesData.data && nodesData.data.length > 0) {
+            // 找到上海港节点或使用第一个叶子节点
+            const shanghaiNode = nodesData.data.find((node: any) => 
+              node.name.includes('上海') || node.name.includes('Shanghai')
+            ) || nodesData.data.find((node: any) => node.type === 'LEAF') || nodesData.data[0]
+            if (shanghaiNode) {
+              setSelectedNode(shanghaiNode)
+            }
+          }
+        }
+
+        // 获取服务数据
+        const servicesResponse = await fetch('/api/services')
+        if (servicesResponse.ok) {
+          const servicesData = await servicesResponse.json()
+          if (servicesData.data) {
+            setS100Services(servicesData.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching real data:', error)
+        // 保持使用mock数据作为后备
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRealData()
+  }, [])
   const [selectedService, setSelectedService] = useState(null)
   const [activeTab, setActiveTab] = useState('map-services')
   const tabsRef = useRef(null)
