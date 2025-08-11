@@ -19,10 +19,10 @@ interface RoleAssignmentResponse {
 // PUT /admin/users/{id}/roles - 分配或修改用户角色
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
     const body: RoleAssignmentRequest = await request.json()
 
     // 验证用户是否存在
@@ -137,10 +137,10 @@ export async function PUT(
 // GET /admin/users/{id}/roles - 获取用户角色和权限
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证用户是否存在
     const user = await db.user.findUnique({

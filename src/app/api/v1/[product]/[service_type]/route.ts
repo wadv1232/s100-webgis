@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ServiceDirectory } from '@/lib/service-directory'
 import { ApiErrorHandler } from '@/lib/api-error'
-import { s101WmsService, s101WfsService, s102WmsService, s102WcsService, s104WmsService } from '@/lib/services/service-init'
+import { s101WmsService, s101WfsService, s102WmsService, s102WcsService } from '@/lib/services/service-init'
 
 interface OGCRequest {
   service: string
@@ -21,7 +21,7 @@ const PRODUCT_SERVICES: Record<string, Record<string, any>> = {
     'WCS': s102WcsService
   },
   'S104': {
-    'WMS': s104WmsService
+    'WMS': null // S104 WMS service not yet implemented
   }
 }
 
@@ -37,12 +37,12 @@ function isValidServiceType(serviceType: string): boolean {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { product: string; service_type: string } }
+  context: { params: Promise<{ product: string; service_type: string }> }
 ) {
   const startTime = Date.now()
   
   try {
-    const { product, service_type } = params
+    const { product, service_type } = await context.params
     const { searchParams } = new URL(request.url)
 
     // 验证产品和服务类型

@@ -1,5 +1,5 @@
 // 自动生成的API文档 - 请勿手动修改
-// 生成时间: 2025-08-11T05:05:32.452Z
+// 生成时间: 2025-08-11T05:28:25.345Z
 // 版本: 1.0.0
 
 export interface ApiEndpoint {
@@ -1998,6 +1998,6 @@ export const apiDocumentation: ApiDocumentation = {
       ]
     }
   ],
-  "generatedAt": "2025-08-11T05:05:32.452Z",
+  "generatedAt": "2025-08-11T05:28:25.345Z",
   "version": "1.0.0"
 };

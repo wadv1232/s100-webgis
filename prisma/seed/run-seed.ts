@@ -13,8 +13,7 @@ async function runSeed() {
     const nodeCount = await prisma.node.count()
     
     if (userCount > 0 || nodeCount > 0) {
-      console.log('数据库中已有数据，跳过种子数据初始化')
-      return
+      console.log('数据库中已有数据，继续添加新的测试用户...')
     }
     
     // 运行种子脚本

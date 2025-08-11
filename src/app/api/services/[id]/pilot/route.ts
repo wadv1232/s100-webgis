@@ -2,19 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { auth } from '@/lib/auth'
 
-interface RouteParams {
-  params: { id: string }
-}
-
 // POST /api/services/[id]/pilot - 启动服务试点（支持本地服务试点）
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await auth(request)
     if (!user || !user.permissions.includes('SERVICE_CREATE')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await context.params
     const body = await request.json()
     const { 
       pilotScope = 'local', 

@@ -28,7 +28,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useMapConfig } from '@/hooks/useMapConfig'
-import { MapLayerSelector } from './MapLayerSelector'
+import MapLayerSelector from './MapLayerSelector'
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(

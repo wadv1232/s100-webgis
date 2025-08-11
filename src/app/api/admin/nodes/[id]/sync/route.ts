@@ -18,12 +18,12 @@ interface SyncResponse {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const startTime = Date.now()
   
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证节点是否存在
     const node = await db.node.findUnique({
@@ -103,10 +103,10 @@ export async function POST(
 // GET /admin/nodes/{id}/sync - 获取同步状态和历史
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证节点是否存在
     const node = await db.node.findUnique({

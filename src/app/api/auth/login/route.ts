@@ -26,11 +26,7 @@ export async function POST(request: NextRequest) {
             type: true
           }
         },
-        userPermissions: {
-          include: {
-            permission: true
-          }
-        }
+        userPermissions: true
       }
     })
 
@@ -72,7 +68,7 @@ export async function POST(request: NextRequest) {
       isActive: user.isActive,
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
-      permissions: user.userPermissions.map(up => up.permission.name)
+      permissions: user.userPermissions.map(up => up.permission.toString())
     }
 
     // In a real application, you would generate and return a JWT token here

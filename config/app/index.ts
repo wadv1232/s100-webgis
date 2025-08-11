@@ -224,16 +224,28 @@ export const defaultAppConfig: AppConfig = {
 export const developmentConfig: Partial<AppConfig> = {
   database: {
     host: 'localhost',
+    port: 5432,
     name: 's100_services_dev',
     user: 'postgres',
     password: 'postgres',
-    ssl: false
+    ssl: false,
+    pool: {
+      min: 2,
+      max: 10,
+      idle: 30000,
+      acquire: 60000
+    }
   },
   logging: {
-    level: 'debug'
+    level: 'debug',
+    format: 'json',
+    destination: 'console'
   },
   api: {
-    baseUrl: 'http://localhost:3001'
+    baseUrl: 'http://localhost:3001',
+    version: 'v1',
+    timeout: 30000,
+    retries: 3
   }
 }
 
@@ -241,21 +253,40 @@ export const developmentConfig: Partial<AppConfig> = {
 export const productionConfig: Partial<AppConfig> = {
   database: {
     host: process.env.DB_HOST || 'localhost',
+    port: 5432,
     name: process.env.DB_NAME || 's100_services',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
-    ssl: true
+    ssl: true,
+    pool: {
+      min: 2,
+      max: 10,
+      idle: 30000,
+      acquire: 60000
+    }
   },
   auth: {
     jwt: {
-      secret: process.env.JWT_SECRET || 'production-secret-key'
+      secret: process.env.JWT_SECRET || 'production-secret-key',
+      expiresIn: '24h',
+      issuer: 's100-webgis',
+      audience: 's100-users'
+    },
+    apiKey: {
+      prefix: 's100',
+      length: 32
     }
   },
   logging: {
-    level: 'warn'
+    level: 'warn',
+    format: 'json',
+    destination: 'console'
   },
   api: {
-    baseUrl: process.env.API_BASE_URL || 'https://api.s100-services.com'
+    baseUrl: process.env.API_BASE_URL || 'https://api.s100-services.com',
+    version: 'v1',
+    timeout: 30000,
+    retries: 3
   }
 }
 
@@ -263,16 +294,28 @@ export const productionConfig: Partial<AppConfig> = {
 export const testConfig: Partial<AppConfig> = {
   database: {
     host: 'localhost',
+    port: 5432,
     name: 's100_services_test',
     user: 'postgres',
     password: 'postgres',
-    ssl: false
+    ssl: false,
+    pool: {
+      min: 2,
+      max: 10,
+      idle: 30000,
+      acquire: 60000
+    }
   },
   logging: {
-    level: 'error'
+    level: 'error',
+    format: 'json',
+    destination: 'console'
   },
   api: {
-    baseUrl: 'http://localhost:3001'
+    baseUrl: 'http://localhost:3001',
+    version: 'v1',
+    timeout: 30000,
+    retries: 3
   }
 }
 

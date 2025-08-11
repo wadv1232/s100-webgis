@@ -23,7 +23,12 @@
     "db:setup": "npm run db:push && npm run db:generate && npm run db:seed",
     "docs:generate": "node scripts/generate-api-docs.js",
     "docs:dev": "npm run docs:generate && npm run dev",
-    "docs:update": "node scripts/generate-api-docs.js"
+    "docs:update": "node scripts/generate-api-docs.js",
+    "api:generate": "node scripts/generate-api-docs.js",
+    "api:test-pages": "node scripts/generate-api-test-pages.js",
+    "api:update": "npm run api:generate && npm run api:test-pages",
+    "api:watch": "node scripts/api-watcher.js",
+    "dev:api": "npm run api:update && npm run dev"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

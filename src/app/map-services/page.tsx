@@ -121,6 +121,13 @@ export default function MapServicesPage() {
   const loadBaseMapConfig = async (nodeId: string) => {
     setLoadingConfig(true)
     try {
+      // 获取节点的代码而不是ID
+      const node = mapServiceNodes.find(n => n.id === nodeId)
+      if (!node) {
+        console.error('Node not found:', nodeId)
+        return
+      }
+      
       // 根据节点选择合适的用户认证
       // 对于 china-national 节点，使用节点管理员用户
       // 对于其他节点，使用管理员用户
@@ -131,7 +138,7 @@ export default function MapServicesPage() {
         token = 'admin@example.com' // 系统管理员
       }
       
-      const response = await fetch(`/api/nodes/${nodeId}/base-map/config`, {
+      const response = await fetch(`/api/nodes/${node.code}/base-map/config`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -165,6 +172,13 @@ export default function MapServicesPage() {
   const saveBaseMapConfig = async () => {
     setLoadingConfig(true)
     try {
+      // 获取节点的代码而不是ID
+      const node = mapServiceNodes.find(n => n.id === selectedNode.id)
+      if (!node) {
+        console.error('Node not found:', selectedNode.id)
+        return
+      }
+      
       // 根据节点选择合适的用户认证
       let token: string
       if (selectedNode.id === 'china-national') {
@@ -173,7 +187,7 @@ export default function MapServicesPage() {
         token = 'admin@example.com' // 系统管理员
       }
       
-      const response = await fetch(`/api/nodes/${selectedNode.id}/base-map/config`, {
+      const response = await fetch(`/api/nodes/${node.code}/base-map/config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

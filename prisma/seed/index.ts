@@ -9,7 +9,8 @@ import { seedNodeHierarchy } from './nodes/01-node-hierarchy.seed'
 import { seedNodeCapabilities } from './nodes/02-node-capabilities.seed'
 import { seedDatasets } from './datasets/01-datasets.seed'
 import { seedServices } from './services/01-services.seed'
-import { seedServiceDirectory } from './services/02-service-directory.seed'
+import { seedEnhancedServices } from './services/02-enhanced-services.seed'
+import { seedServiceDirectory } from './services/03-service-directory.seed'
 import { seedSystemConfig } from './system/01-system-config.seed'
 import { seedSamplePosts } from './system/02-sample-posts.seed'
 
@@ -22,19 +23,19 @@ async function main() {
   if (process.env.NODE_ENV === 'development') {
     console.log('🧹 清理现有数据...')
     await prisma.userPermission.deleteMany()
-    await prisma.user.deleteMany()
     await prisma.post.deleteMany()
     await prisma.service.deleteMany()
     await prisma.dataset.deleteMany()
     await prisma.capability.deleteMany()
     await prisma.childNode.deleteMany()
+    await prisma.serviceDirectoryEntry.deleteMany()
+    await prisma.syncTask.deleteMany()
+    await prisma.systemConfig.deleteMany()
+    await prisma.user.deleteMany()
     await prisma.node.deleteMany()
     await prisma.scenarioRole.deleteMany()
     await prisma.userScenario.deleteMany()
     await prisma.rolePermission.deleteMany()
-    await prisma.serviceDirectoryEntry.deleteMany()
-    await prisma.syncTask.deleteMany()
-    await prisma.systemConfig.deleteMany()
   }
 
   // 按功能模块顺序创建数据
@@ -57,7 +58,8 @@ async function main() {
 
   // 4. 服务管理模块
   console.log('\n🚀 服务管理模块')
-  await seedServices(datasets)
+  const basicServices = await seedServices(datasets)
+  const enhancedServices = await seedEnhancedServices(datasets)
   await seedServiceDirectory(nodes)
 
   // 5. 系统配置模块

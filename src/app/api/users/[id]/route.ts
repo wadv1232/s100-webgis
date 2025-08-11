@@ -7,9 +7,9 @@ interface RouteParams {
 }
 
 // GET /api/users/[id] - Get single user
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id } = await context.params
     const user = await db.user.findUnique({
       where: { id },
       include: {
@@ -61,9 +61,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/users/[id] - Update user
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id } = await context.params
     const body = await request.json()
     const { email, username, name, role, nodeId, isActive, permissions = [] } = body
 
@@ -171,9 +171,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/users/[id] - Delete user
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
+    const { id } = await context.params
     // Check if user exists
     const existingUser = await db.user.findUnique({
       where: { id }

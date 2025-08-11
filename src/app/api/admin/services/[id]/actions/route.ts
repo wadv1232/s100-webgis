@@ -19,10 +19,10 @@ interface ServiceActionResponse {
 // POST /admin/services/{id}/actions - 对服务实例执行启停操作
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
     const body: ServiceActionRequest = await request.json()
 
     // 验证操作类型
@@ -159,10 +159,10 @@ export async function POST(
 // GET /admin/services/{id}/actions - 获取服务操作历史
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证服务是否存在
     const service = await db.service.findUnique({

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useMapConfig } from '@/hooks/useMapConfig'
-import { MapLayerSelector } from '@/components/maps/MapLayerSelector'
+import MapLayerSelector from '@/components/maps/MapLayerSelector'
 import { 
   Layers, 
   Settings, 

@@ -2,19 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { auth } from '@/lib/auth'
 
-interface RouteParams {
-  params: { id: string }
-}
-
 // GET /api/services/[id] - 获取单个服务详情
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await auth(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await context.params
 
     // 获取服务能力
     const capability = await db.capability.findUnique({
@@ -46,14 +42,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/services/[id] - 更新服务
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await auth(request)
     if (!user || !user.permissions.includes('SERVICE_UPDATE')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await context.params
     const body = await request.json()
     const {
       endpoint,
@@ -127,14 +123,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/services/[id] - 删除服务
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await auth(request)
     if (!user || !user.permissions.includes('SERVICE_DELETE')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await context.params
 
     // 检查服务是否存在
     const existingCapability = await db.capability.findUnique({

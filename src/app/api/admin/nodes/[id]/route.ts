@@ -5,10 +5,10 @@ import { ApiErrorHandler } from '@/lib/api-error'
 // GET /admin/nodes/{id} - 获取特定子节点的详细信息和缓存的能力
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params
   try {
-    const { id } = params
 
     const node = await db.node.findUnique({
       where: { id },
@@ -110,10 +110,10 @@ export async function GET(
 // PUT /admin/nodes/{id} - 更新子节点的注册信息
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
     const body = await request.json()
 
     const { name, description, apiUrl, adminUrl, coverage, isActive, parentId } = body
@@ -224,10 +224,10 @@ export async function PUT(
 // DELETE /admin/nodes/{id} - 注销一个子节点
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证节点是否存在
     const node = await db.node.findUnique({

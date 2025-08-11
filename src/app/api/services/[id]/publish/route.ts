@@ -2,19 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { auth } from '@/lib/auth'
 
-interface RouteParams {
-  params: { id: string }
-}
-
 // POST /api/services/[id]/publish - 发布服务（支持紧急航道变更）
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await auth(request)
     if (!user || !user.permissions.includes('DATASET_PUBLISH')) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await context.params
     const body = await request.json()
     const { isEmergency = false, priority = 'normal', message } = body
 

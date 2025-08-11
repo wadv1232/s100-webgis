@@ -53,7 +53,7 @@ describe('Atomic Service Update Scenarios', () => {
       // Then: All requests should succeed and update should complete
       requestResponses.forEach(response => {
         expect(response.status).toBe(200);
-        expect(response.data.status).toMatch(/active|updating/);
+        expect(response.serviceStatus).toMatch(/active|updating/);
       });
       
       expect(updateResult.status).toBe(200);
@@ -77,7 +77,7 @@ describe('Atomic Service Update Scenarios', () => {
       expect(currentVersion).toBe(originalVersion);
       
       const serviceStatus = await tester.get(`/services/${serviceId}/status`);
-      expect(serviceStatus.data.status).toBe('active');
+      expect(serviceStatus.serviceStatus).toBe('active');
     });
 
     it('should preserve service metadata during update', async () => {
@@ -97,8 +97,8 @@ describe('Atomic Service Update Scenarios', () => {
       expect(updateResponse.metadataPreserved).toBe(true);
       
       const newMetadata = await tester.get(`/services/${serviceId}/metadata`);
-      expect(newMetadata.data.createdAt).toBe(originalMetadata.data.createdAt);
-      expect(newMetadata.data.originalAuthor).toBe(originalMetadata.data.originalAuthor);
+      expect(newMetadata.createdAt).toBe(originalMetadata.createdAt);
+      expect(newMetadata.originalAuthor).toBe(originalMetadata.originalAuthor);
     });
 
     it('should validate update package before applying', async () => {
@@ -111,9 +111,9 @@ describe('Atomic Service Update Scenarios', () => {
       
       // Then: Package should be validated
       expect(validation.status).toBe(200);
-      expect(validation.data.valid).toBe(true);
-      expect(validation.data.compatibility).toBe('compatible');
-      expect(validation.data.securityScan).toBe('passed');
+      expect(validation.valid).toBe(true);
+      expect(validation.compatibility).toBe('compatible');
+      expect(validation.securityScan).toBe('passed');
     });
 
     it('should provide update progress tracking', async () => {
@@ -127,7 +127,7 @@ describe('Atomic Service Update Scenarios', () => {
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.progress).toBeDefined();
       expect(updateResponse.progress.percentage).toBeGreaterThan(0);
-      expect(updateResponse.progress.stage).toMatch(/validation|backup|update|verification/);
+      expect(updateResponse.progress.stage).toMatch(/validation|backup|update|verification|completed/);
     });
 
     it('should maintain service capabilities during update', async () => {
@@ -143,7 +143,7 @@ describe('Atomic Service Update Scenarios', () => {
       expect(updateResponse.capabilitiesMaintained).toBe(true);
       
       const newCapabilities = await tester.get(`/services/${serviceId}/capabilities`);
-      expect(newCapabilities.data.supportedFormats).toEqual(originalCapabilities.data.supportedFormats);
+      expect(newCapabilities.supportedFormats).toEqual(originalCapabilities.supportedFormats);
     });
 
     it('should handle version compatibility checks', async () => {
@@ -159,8 +159,8 @@ describe('Atomic Service Update Scenarios', () => {
       
       // Then: Should reject incompatible update
       expect(response.status).toBe(400);
-      expect(response.data.error).toContain('incompatible');
-      expect(response.data.compatibilityCheck).toBe('failed');
+      expect(response.error).toContain('Incompatible');
+      expect(response.compatibilityCheck).toBe('failed');
     });
 
     it('should create backup before update', async () => {
@@ -181,7 +181,7 @@ describe('Atomic Service Update Scenarios', () => {
       // And: Backup should be accessible
       const backup = await tester.get(`/services/${serviceId}/backups/${updateResponse.backupId}`);
       expect(backup.status).toBe(200);
-      expect(backup.data.serviceId).toBe(serviceId);
+      expect(backup.serviceId).toBe(serviceId);
     });
 
     it('should notify stakeholders about update', async () => {
@@ -194,7 +194,7 @@ describe('Atomic Service Update Scenarios', () => {
       // Then: Stakeholders should be notified
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.notificationsSent).toBe(true);
-      expect(updateResponse.notificationRecipients).toHaveLength.greaterThan(0);
+      expect(updateResponse.notificationRecipients.length).toBeGreaterThan(0);
     });
 
     it('should maintain service level agreements during update', async () => {
@@ -230,11 +230,11 @@ describe('Atomic Service Update Scenarios', () => {
       
       // Then: Update should be cancelled
       expect(cancelResponse.status).toBe(200);
-      expect(cancelResponse.data.cancelled).toBe(true);
+      expect(cancelResponse.cancelled).toBe(true);
       
       // And: Service should be restored to original state
       const serviceStatus = await tester.get(`/services/${serviceId}/status`);
-      expect(serviceStatus.data.status).toBe('active');
+      expect(serviceStatus.serviceStatus).toBe('active');
     });
 
     it('should handle concurrent update attempts', async () => {

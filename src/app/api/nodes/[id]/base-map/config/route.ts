@@ -9,7 +9,18 @@ export async function GET(
 ) {
   return requireAuth(async (request: NextRequest, user: any) => {
     try {
-      const { id: nodeId } = await params
+      const { id: nodeCode } = await params
+      
+      // 首先根据节点代码获取节点ID
+      const node = await db.node.findUnique({
+        where: { code: nodeCode }
+      })
+      
+      if (!node) {
+        return NextResponse.json({ error: 'Node not found' }, { status: 404 })
+      }
+      
+      const nodeId = node.id
 
       // 获取节点的默认底图配置
       const defaultConfig = await db.nodeBaseMapConfig.findFirst({
@@ -59,7 +70,18 @@ export async function POST(
 ) {
   return requireAuth(async (request: NextRequest, user: any) => {
     try {
-      const { id: nodeId } = await params
+      const { id: nodeCode } = await params
+      
+      // 首先根据节点代码获取节点ID
+      const node = await db.node.findUnique({
+        where: { code: nodeCode }
+      })
+      
+      if (!node) {
+        return NextResponse.json({ error: 'Node not found' }, { status: 404 })
+      }
+      
+      const nodeId = node.id
       const body = await request.json()
       const { 
         type, 
@@ -189,7 +211,18 @@ export async function DELETE(
 ) {
   return requireAuth(async (request: NextRequest, user: any) => {
     try {
-      const { id: nodeId } = await params
+      const { id: nodeCode } = await params
+      
+      // 首先根据节点代码获取节点ID
+      const node = await db.node.findUnique({
+        where: { code: nodeCode }
+      })
+      
+      if (!node) {
+        return NextResponse.json({ error: 'Node not found' }, { status: 404 })
+      }
+      
+      const nodeId = node.id
       const { searchParams } = new URL(request.url)
       const configId = searchParams.get('configId')
 

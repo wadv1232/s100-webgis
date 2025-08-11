@@ -568,6 +568,158 @@ model UserIdentityMapping {
   @@map("user_identity_mappings")
 }
 
+// 远程服务表
+model RemoteService {
+  id                    String            @id @default(cuid())
+  name                  String            // 服务名称
+  endpoint              String            // 服务端点URL
+  productType           S100Product       // S-100产品类型
+  serviceType           ServiceType       // 服务类型
+  description           String?           // 服务描述
+  validationConfig      String?           // 验证配置 (JSON格式)
+  status                RemoteServiceStatus @default(PENDING_VALIDATION) // 服务状态
+  lastValidation        DateTime?         // 最后验证时间
+  lastValidationResult  String?           // 最后验证结果 (JSON格式)
+  syncCapabilities      String?           // 同步的服务能力 (JSON格式)
+  syncMetadata          String?           // 同步的元数据 (JSON格式)
+  lastSync              DateTime?         // 最后同步时间
+  lastSyncAttempt       DateTime?         // 最后同步尝试时间
+  lastSyncResult        String?           // 最后同步结果 (JSON格式)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@map("remote_services")
+}
+
+// 远程服务状态枚举
+enum RemoteServiceStatus {
+  PENDING_VALIDATION  // 等待验证
+  VALIDATING          // 验证中
+  ACTIVE              // 活跃
+  INACTIVE            // 非活跃
+  ERROR               // 错误
+  SYNCING             // 同步中
+  SYNC_ERROR          // 同步错误
+}
+
+// 批量操作表
+model BatchOperation {
+  id                String            @id @default(cuid())
+  operationType     BatchOperationType // 操作类型
+  status            BatchOperationStatus @default(PENDING) // 操作状态
+  totalItems        Int               // 总项目数
+  processedItems    Int               @default(0) // 已处理项目数
+  successCount      Int               @default(0) // 成功计数
+  failureCount      Int               @default(0) // 失败计数
+  itemIds           String            // 项目ID列表 (JSON数组)
+  options           String?           // 操作选项 (JSON格式)
+  errors            String?           // 错误信息 (JSON数组)
+  startedAt         DateTime?         // 开始时间
+  completedAt       DateTime?         // 完成时间
+  duration          Int?              // 执行时长(毫秒)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("batch_operations")
+}
+
+// 批量操作类型枚举
+enum BatchOperationType {
+  DATASET_PUBLISH    // 批量发布数据集
+  DATASET_ARCHIVE   // 批量归档数据集
+  SERVICE_ACTIVATE  // 批量激活服务
+  SERVICE_DEACTIVATE // 批量停用服务
+  USER_ROLE_UPDATE  // 批量更新用户角色
+}
+
+// 批量操作状态枚举
+enum BatchOperationStatus {
+  PENDING           // 等待中
+  PROCESSING        // 处理中
+  COMPLETED         // 已完成
+  PARTIAL_SUCCESS   // 部分成功
+  FAILED            // 失败
+  CANCELLED         // 已取消
+}
+
+// 告警规则表
+model AlertRule {
+  id                    String              @id @default(cuid())
+  name                  String              // 规则名称
+  description           String?             // 规则描述
+  severity              AlertSeverity       // 告警严重程度
+  metric                AlertMetric         // 监控指标
+  condition             AlertCondition      // 告警条件
+  threshold             Float               // 阈值
+  duration              Int?                // 持续时间(秒)
+  enabled               Boolean             @default(true) // 是否启用
+  notificationChannels   String              // 通知渠道 (JSON数组)
+  lastTriggeredAt       DateTime?           // 最后触发时间
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // 关系
+  alerts                Alert[]             // 关联的告警
+
+  @@map("alert_rules")
+}
+
+// 告警严重程度枚举
+enum AlertSeverity {
+  CRITICAL             // 严重
+  WARNING              // 警告
+  INFO                 // 信息
+}
+
+// 监控指标枚举
+enum AlertMetric {
+  CPU_USAGE            // CPU使用率
+  MEMORY_USAGE         // 内存使用率
+  DISK_USAGE           // 磁盘使用率
+  RESPONSE_TIME        // 响应时间
+  ERROR_RATE           // 错误率
+  NODE_HEALTH          // 节点健康度
+  SERVICE_UPTIME       // 服务可用性
+  REQUEST_RATE         // 请求率
+}
+
+// 告警条件枚举
+enum AlertCondition {
+  GREATER_THAN         // 大于
+  LESS_THAN            // 小于
+  EQUALS               // 等于
+  NOT_EQUALS           // 不等于
+}
+
+// 告警表
+model Alert {
+  id                    String              @id @default(cuid())
+  ruleId                String              // 关联的规则ID
+  severity              AlertSeverity       // 告警严重程度
+  title                 String              // 告警标题
+  message               String              // 告警消息
+  currentValue          Float?              // 当前值
+  threshold             Float?              // 阈值
+  status                AlertStatus         @default(ACTIVE) // 告警状态
+  resolvedAt            DateTime?           // 解决时间
+  resolvedBy            String?             // 解决者用户ID
+  resolutionNotes       String?             // 解决说明
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // 关系
+  rule                  AlertRule           @relation(fields: [ruleId], references: [id])
+
+  @@map("alerts")
+}
+
+// 告警状态枚举
+enum AlertStatus {
+  ACTIVE                // 活跃
+  RESOLVED              // 已解决
+  SUPPRESSED            // 已抑制
+}
+
 // Post表 (保持向后兼容)
 model Post {
   id        String   @id @default(cuid())

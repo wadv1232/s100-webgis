@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import EnhancedMapWithConfig from '@/components/maps/EnhancedMapWithConfig'
-import { MapLayerSelector } from '@/components/maps/MapLayerSelector'
+import MapLayerSelector from '@/components/maps/MapLayerSelector'
 import { useMapConfig } from '@/hooks/useMapConfig'
 import { 
   MapPin, 

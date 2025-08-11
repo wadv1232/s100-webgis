@@ -30,10 +30,10 @@ interface UpdateServiceRequest {
 // GET /admin/services/{id} - 获取服务实例的详细配置
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     const service = await db.service.findUnique({
       where: { id },
@@ -105,10 +105,10 @@ export async function GET(
 // PUT /admin/services/{id} - 更新服务实例的配置（如更换数据集）
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
     const body: UpdateServiceRequest = await request.json()
 
     // 验证服务是否存在
@@ -236,10 +236,10 @@ export async function PUT(
 // DELETE /admin/services/{id} - 删除服务实例的配置
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await context.params
 
     // 验证服务是否存在
     const service = await db.service.findUnique({
