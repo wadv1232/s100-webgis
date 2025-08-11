@@ -5,6 +5,7 @@
  * @version 3.0.0
  */
 
+import '@testing-library/jest-dom';
 import { setupTestEnvironment } from './testHelpers';
 
 // Setup test environment before all tests

@@ -38,6 +38,7 @@ import {
 import S100ServiceMap from '@/components/maps/SharedMapFixed'
 import ServiceDetailModal from '@/components/ui/ServiceDetailModal'
 import { mapServiceNodes, mockS100Services } from '@/lib/mock-data'
+import { validateAndExtractServices, safeFilter, safeGetNodeServices } from '@/lib/apiValidation'
 
 export default function MapServicesPage() {
   const [selectedNode, setSelectedNode] = useState(mapServiceNodes[3]) // 默认选择上海港
@@ -67,8 +68,9 @@ export default function MapServicesPage() {
         const servicesResponse = await fetch('/api/services')
         if (servicesResponse.ok) {
           const servicesData = await servicesResponse.json()
-          if (servicesData.data) {
-            setS100Services(servicesData.data)
+          const validatedServices = validateAndExtractServices(servicesData)
+          if (validatedServices.length > 0) {
+            setS100Services(validatedServices)
           }
         }
       } catch (error) {
@@ -364,16 +366,16 @@ export default function MapServicesPage() {
 
   const getNodeServices = (nodeId: string) => {
     const node = mapServiceNodes.find(n => n.id === nodeId)
-    return node ? node.services : []
+    return safeGetNodeServices(node)
   }
 
   const getAvailableServices = (nodeId: string) => {
     const nodeServices = getNodeServices(nodeId)
     return {
-      mapServices: s100Services.filter(service => 
+      mapServices: safeFilter(s100Services, service => 
         nodeServices.some(ns => ns.includes(service.product) && ns.includes('WMS'))
       ),
-      apiServices: s100Services.filter(service => 
+      apiServices: safeFilter(s100Services, service => 
         nodeServices.some(ns => ns.includes(service.product) && (ns.includes('WFS') || ns.includes('WCS')))
       )
     }

@@ -260,7 +260,11 @@ export default function SidebarNavigation({
 
           {hasChildren && isExpanded && !isCollapsed && (
             <div className="ml-4 mt-1 space-y-1">
-              {item.children.map(child => renderNavItem(child, level + 1))}
+              {item.children.map(child => (
+                <div key={child.href}>
+                  {renderNavItem(child, level + 1)}
+                </div>
+              ))}
             </div>
           )}
         </div>

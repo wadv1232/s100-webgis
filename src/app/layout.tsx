@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeToggle";
 import { I18nProvider } from "@/lib/i18n/hooks";
 import { SkipToContent } from "@/components/AccessibleComponents";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "S-100海事服务平台",
@@ -44,7 +45,10 @@ export default function RootLayout({
             <ThemeProvider>
               <SkipToContent />
               <div className="min-h-screen bg-background">
-                {children}
+                <Navbar />
+                <main className="min-h-screen">
+                  {children}
+                </main>
               </div>
               <Toaster />
             </ThemeProvider>
