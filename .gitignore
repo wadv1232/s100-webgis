@@ -152,3 +152,19 @@ tools/commit-tools/auto-commit.sh
 
 # Mock data (if not needed in production)
 mock-data/
+
+# Auto-generated API test pages (should not be committed)
+src/app/api-test/**/*.tsx
+src/lib/generated/api-documentation.ts
+
+# Development and test files
+.jest-cache/
+test-results/
+dev-server.sh
+log-monitor.sh
+check-status.sh
+system-status-*.txt
+
+# Temporary documentation and reports
+*.md
+!README.md

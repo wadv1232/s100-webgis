@@ -101,10 +101,10 @@ export default function DeveloperPortal() {
   // 开发者工具
   const devTools = [
     {
-      name: 'API测试控制台',
-      description: '在线测试API端点，查看实时响应',
+      name: 'API测试平台',
+      description: '自动生成的API测试界面，支持所有70个端点',
       icon: Terminal,
-      href: '/api-test-console',
+      href: '/api-test',
       color: 'blue'
     },
     {

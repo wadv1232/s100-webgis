@@ -112,7 +112,12 @@ class ApiDocGenerator {
       .replace(/\[([^\]]+)\]/g, '{$1}')
       .replace(/\\/g, '/');
     
-    return `/api${routePath}`;
+    // 确保路径格式正确：/api/admin/apikeys 而不是 /apiadmin/apikeys
+    if (routePath.startsWith('/')) {
+      return `/api${routePath}`;
+    } else {
+      return `/api/${routePath}`;
+    }
   }
 
   inferHttpMethod(routePath, fileContent) {
