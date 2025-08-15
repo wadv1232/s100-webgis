@@ -165,6 +165,34 @@ log-monitor.sh
 check-status.sh
 system-status-*.txt
 
-# Temporary documentation and reports
+# Temporary documentation and reports (auto-generated)
 *.md
 !README.md
+!docs/**/*.md
+!tests/README.md
+
+# Auto-generated test reports and results
+test-results/
+*.report.*
+*REPORT*.md
+*STATUS*.md
+*FIX*.md
+
+# Auto-generated API documentation
+src/lib/generated/
+**/generated-api-docs/**
+
+# Development task files (auto-generated)
+development/tasks/active/
+development/tasks/completed/
+development/tasks/*.json
+
+# Auto-generated scripts and tools
+tools/commit-tools/
+tools/scripts/auto-*.js
+
+# Log files and temporary files
+*.log
+dev.log
+*.tmp
+*.temp
