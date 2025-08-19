@@ -599,7 +599,7 @@ export default function DatasetsPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>确认删除</AlertDialogTitle>
                               <AlertDialogDescription>
-                                确定要删除数据集 "{dataset.name}" 吗？此操作不可撤销。
+                                确定要删除数据集 &quot;{dataset.name}&quot; 吗？此操作不可撤销。
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
