@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const selectedService = availableServices[0]
     
     // 构建重定向URL到实际的服务节点
-    const baseUrl = selectedService.node.apiUrl || `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}`
+    const baseUrl = selectedService.node.apiUrl || `${process.env.NEXT_PUBLIC_BASE_URL || `http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`}`
     const redirectUrl = new URL(`${baseUrl}/api/s104/wms`)
     
     // 传递所有原始参数

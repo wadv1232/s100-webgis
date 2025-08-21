@@ -236,7 +236,7 @@ async function validateServices(services: any[]) {
   for (const service of services) {
     try {
       // 构建服务端点URL
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`
       const serviceUrl = `${baseUrl}${service.endpoint}`
 
       const response = await fetch(serviceUrl, {

@@ -128,7 +128,7 @@ export const defaultAppConfig: AppConfig = {
   },
   
   api: {
-    baseUrl: 'http://localhost:3001',
+    baseUrl: `http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`,
     version: 'v1',
     timeout: 30000,
     retries: 3
@@ -150,10 +150,10 @@ export const defaultAppConfig: AppConfig = {
   },
   
   server: {
-    port: 3001,
+    port: 3000,
     host: '0.0.0.0',
     cors: {
-      origin: ['http://localhost:3000', 'http://localhost:3001'],
+      origin: [`http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`, 'http://localhost:3001'],
       credentials: true
     },
     rateLimit: {
@@ -242,7 +242,7 @@ export const developmentConfig: Partial<AppConfig> = {
     destination: 'console'
   },
   api: {
-    baseUrl: 'http://localhost:3001',
+    baseUrl: `http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`,
     version: 'v1',
     timeout: 30000,
     retries: 3
@@ -312,7 +312,7 @@ export const testConfig: Partial<AppConfig> = {
     destination: 'console'
   },
   api: {
-    baseUrl: 'http://localhost:3001',
+    baseUrl: `http://${process.env.HOSTNAME || 'localhost'}:${process.env.PORT || '3000'}`,
     version: 'v1',
     timeout: 30000,
     retries: 3
